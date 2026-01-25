@@ -19,8 +19,15 @@ if (process.env.NODE_ENV === 'development') {
 
 // Route Placeholders (Will be replaced with actual routes)
 app.get('/', (req, res) => {
-    res.send('Yatra Bus Billing API is running...');
+    res.send('Yatra Bus Billing API is running... <a href="/api-docs">View Documentation</a>');
 });
+
+// Swagger Specs
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./config/swagger');
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+
 
 // Import Routes
 const authRoutes = require('./routes/authRoutes');
