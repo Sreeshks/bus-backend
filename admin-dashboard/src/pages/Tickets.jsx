@@ -1,25 +1,37 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { Printer, MapPin, IndianRupee, User } from 'lucide-react';
+import { Printer, MapPin, IndianRupee, User, Bus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Tickets = () => {
     const [locations, setLocations] = useState([]);
+    const [buses, setBuses] = useState([]); // List of buses
     const [tickets, setTickets] = useState([]);
     const [formData, setFormData] = useState({
-        source: '', destination: '', adultCount: 1, childCount: 0
+        busId: '', // Added busId
+        source: '',
+        destination: '',
+        adultCount: 1,
+        childCount: 0
     });
     const [loading, setLoading] = useState(false);
     const [lastTicket, setLastTicket] = useState(null);
 
     const fetchInitial = async () => {
         try {
-            const [locRes, ticketRes] = await Promise.all([
+            const [locRes, ticketRes, busRes] = await Promise.all([
                 api.get('/master/locations'),
-                api.get('/tickets')
+                api.get('/tickets'),
+                api.get('/buses') // Fetch buses
             ]);
             setLocations(locRes.data);
             setTickets(ticketRes.data);
+            setBuses(busRes.data);
+
+            // Auto-select first bus if available
+            if (busRes.data.length > 0) {
+                setFormData(prev => ({ ...prev, busId: busRes.data[0]._id }));
+            }
         } catch (error) {
             console.error(error);
         }
@@ -31,13 +43,19 @@ const Tickets = () => {
 
     const handleIssue = async (e) => {
         e.preventDefault();
+
+        if (!formData.busId) {
+            return toast.error("Please select a bus");
+        }
+
         setLoading(true);
         try {
             const { data } = await api.post('/tickets', formData);
             setLastTicket(data);
             setTickets([data, ...tickets]);
             toast.success('Ticket Issued Successfully');
-            setFormData({ ...formData, adultCount: 1, childCount: 0 }); // Retain route for speed
+            // Keep bus and route selected, reset counts
+            setFormData(prev => ({ ...prev, adultCount: 1, childCount: 0 }));
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to issue ticket');
         } finally {
@@ -56,7 +74,29 @@ const Tickets = () => {
                     </h2>
 
                     <form onSubmit={handleIssue} className="space-y-4">
-                        <div className="space-y-4 relative">
+
+                        {/* Bus Selection */}
+                        <div>
+                            <label className="text-xs font-semibold text-slate-500 ml-1 uppercase mb-1 block">Select Bus</label>
+                            <div className="relative">
+                                <Bus size={18} className="absolute left-3 top-3 text-slate-400" />
+                                <select
+                                    value={formData.busId}
+                                    onChange={(e) => setFormData({ ...formData, busId: e.target.value })}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none appearance-none"
+                                    required
+                                >
+                                    <option value="">-- Choose Bus --</option>
+                                    {buses.map(bus => (
+                                        <option key={bus._id} value={bus._id}>
+                                            {bus.name} ({bus.busNumber})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 relative pt-2">
                             <div className="absolute left-3 top-9 bottom-9 w-0.5 bg-slate-100"></div>
                             <div>
                                 <label className="text-xs font-semibold text-slate-500 ml-8 uppercase mb-1 block">From</label>
