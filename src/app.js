@@ -22,6 +22,16 @@ app.get('/', (req, res) => {
     res.send('Yatra Bus Billing API is running... <a href="/api-docs">View Documentation</a>');
 });
 
+// Health Check Endpoint
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+        service: 'yatra-backend'
+    });
+});
+
 // Swagger Specs
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
