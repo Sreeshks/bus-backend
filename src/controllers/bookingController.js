@@ -74,12 +74,6 @@ const getMyBookings = async (req, res) => {
     res.json(bookings);
 };
 
-module.exports = {
-    createBooking,
-    getMyBookings,
-    cancelBooking,
-};
-
 // @desc    Cancel booking
 // @route   PUT /api/bookings/:id/cancel
 // @access  Private
@@ -113,4 +107,11 @@ const cancelBooking = async (req, res) => {
     }
 
     res.json({ message: 'Booking cancelled', booking });
+};
+
+module.exports = {
+    createBooking,
+    getBookingById,
+    getMyBookings,
+    cancelBooking,
 };
