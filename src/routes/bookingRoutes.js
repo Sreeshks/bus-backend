@@ -4,6 +4,7 @@ const {
     createBooking,
     getBookingById,
     getMyBookings,
+    cancelBooking
 } = require('../controllers/bookingController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -84,4 +85,25 @@ router.route('/mybookings').get(protect, getMyBookings);
  */
 router.route('/:id').get(protect, getBookingById);
 
+/**
+ * @swagger
+ * /api/bookings/{id}/cancel:
+ *   put:
+ *     summary: Cancel a booking
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Booking cancelled
+ */
+router.route('/:id/cancel').put(protect, cancelBooking);
+
 module.exports = router;
+

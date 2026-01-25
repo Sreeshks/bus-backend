@@ -36,6 +36,7 @@ const tripRoutes = require('./routes/tripRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const masterRoutes = require('./routes/masterRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/buses', busRoutes);
@@ -43,6 +44,7 @@ app.use('/api/trips', tripRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/master', masterRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
