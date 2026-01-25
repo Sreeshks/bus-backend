@@ -10,8 +10,10 @@ import Dashboard from './pages/Dashboard';
 import Buses from './pages/Buses';
 import Trips from './pages/Trips';
 import Tickets from './pages/Tickets';
+import MasterData from './pages/MasterData';
 
 function App() {
+
   return (
     <Router>
       <AuthProvider>
@@ -25,6 +27,7 @@ function App() {
             <Route path="/buses" element={<Buses />} />
             <Route path="/trips" element={<Trips />} />
             <Route path="/tickets" element={<Tickets />} />
+            <Route path="/master" element={<MasterData />} />
             <Route path="/users" element={<div>Users (Admin Only)</div>} />
             <Route path="/reports" element={<div>Reports</div>} />
           </Route>
