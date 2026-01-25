@@ -30,7 +30,7 @@ const protect = async (req, res, next) => {
 };
 
 const admin = (req, res, next) => {
-    if (req.user && req.user.isAdmin) {
+    if (req.user && (req.user.isAdmin || req.user.role === 'Admin')) {
         next();
     } else {
         res.status(401);
@@ -38,4 +38,21 @@ const admin = (req, res, next) => {
     }
 };
 
-module.exports = { protect, admin };
+// Middleware to check for specific permissions
+const checkPermission = (requiredPermission) => {
+    return (req, res, next) => {
+        if (
+            req.user &&
+            (req.user.isAdmin ||
+                req.user.role === 'Admin' ||
+                req.user.permissions.includes(requiredPermission))
+        ) {
+            next();
+        } else {
+            res.status(403);
+            throw new Error(`Not authorized: Requires ${requiredPermission} permission`);
+        }
+    };
+};
+
+module.exports = { protect, admin, checkPermission };

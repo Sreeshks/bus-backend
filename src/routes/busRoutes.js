@@ -7,13 +7,13 @@ const {
     updateBus,
     deleteBus,
 } = require('../controllers/busController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, checkPermission } = require('../middleware/authMiddleware');
 
 /**
  * @swagger
  * tags:
  *   name: Buses
- *   description: Bus management (Admin only)
+ *   description: Bus management
  */
 
 /**
@@ -57,7 +57,9 @@ const { protect, admin } = require('../middleware/authMiddleware');
  *       201:
  *         description: Bus created
  */
-router.route('/').get(getBuses).post(protect, admin, createBus);
+router.route('/')
+    .get(getBuses)
+    .post(protect, checkPermission('manage_buses'), createBus);
 
 /**
  * @swagger
@@ -113,10 +115,9 @@ router.route('/').get(getBuses).post(protect, admin, createBus);
  *       200:
  *         description: Bus deleted
  */
-router
-    .route('/:id')
+router.route('/:id')
     .get(getBusById)
-    .put(protect, admin, updateBus)
-    .delete(protect, admin, deleteBus);
+    .put(protect, checkPermission('manage_buses'), updateBus)
+    .delete(protect, checkPermission('manage_buses'), deleteBus);
 
 module.exports = router;

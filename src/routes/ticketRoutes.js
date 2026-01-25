@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { issueTicket, getTickets } = require('../controllers/ticketController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, checkPermission } = require('../middleware/authMiddleware');
 
 /**
  * @swagger
@@ -50,6 +50,8 @@ const { protect } = require('../middleware/authMiddleware');
  *       201:
  *         description: Ticket issued with total amount
  */
-router.route('/').get(protect, getTickets).post(protect, issueTicket);
+router.route('/')
+    .get(protect, getTickets)
+    .post(protect, checkPermission('issue_tickets'), issueTicket);
 
 module.exports = router;

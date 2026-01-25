@@ -20,6 +20,15 @@ const userSchema = mongoose.Schema({
         required: true,
         default: false,
     },
+    role: {
+        type: String,
+        enum: ['Admin', 'Manager', 'Conductor', 'Employee'],
+        default: 'Employee',
+    },
+    permissions: [{
+        type: String,
+        // Common permissions: 'manage_users', 'manage_buses', 'manage_trips', 'manage_locations', 'issue_tickets', 'view_reports'
+    }],
 }, {
     timestamps: true,
 });
