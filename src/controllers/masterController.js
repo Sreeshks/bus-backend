@@ -1,0 +1,85 @@
+const Location = require('../models/Location');
+const Fare = require('../models/Fare');
+
+// --- Locations ---
+
+// @desc    Add a new location/town
+// @route   POST /api/locations
+// @access  Private/Admin
+const addLocation = async (req, res) => {
+    const { name, code } = req.body;
+
+    const locationExists = await Location.findOne({ name });
+    if (locationExists) {
+        res.status(400);
+        throw new Error('Location already exists');
+    }
+
+    const location = await Location.create({ name, code });
+    res.status(201).json(location);
+};
+
+// @desc    Get all locations
+// @route   GET /api/locations
+// @access  Public
+const getLocations = async (req, res) => {
+    const locations = await Location.find({});
+    res.json(locations);
+};
+
+// --- Fares ---
+
+// @desc    Set fare between two locations
+// @route   POST /api/fares
+// @access  Private/Admin
+const addFare = async (req, res) => {
+    const { source, destination, amount } = req.body;
+
+    // Check if fare exists for this pair
+    const fareExists = await Fare.findOne({ source, destination });
+
+    if (fareExists) {
+        fareExists.amount = amount;
+        const updatedFare = await fareExists.save();
+        res.json(updatedFare);
+    } else {
+        const fare = await Fare.create({ source, destination, amount });
+        res.status(201).json(fare);
+    }
+};
+
+// @desc    Get fare
+// @route   GET /api/fares
+// @access  Public
+const getFareQuery = async (req, res) => {
+    const { source, destination } = req.query;
+
+    if (!source || !destination) {
+        // Return all fares if no query (maybe paginated in future)
+        const fares = await Fare.find({});
+        return res.json(fares);
+    }
+
+    const fare = await Fare.findOne({ source, destination });
+
+    if (fare) {
+        res.json(fare);
+    } else {
+        // Try reverse direction if simple A-B is missing (Assuming symmetric pricing)
+        // Or return 404
+        const reverseFare = await Fare.findOne({ source: destination, destination: source });
+        if (reverseFare) {
+            res.json(reverseFare);
+        } else {
+            res.status(404);
+            throw new Error('Fare not defined for this route');
+        }
+    }
+};
+
+module.exports = {
+    addLocation,
+    getLocations,
+    addFare,
+    getFareQuery
+};
