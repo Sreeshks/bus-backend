@@ -8,23 +8,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 const SidebarItem = ({ icon: Icon, label, path, active, onClick }) => {
     return (
         <motion.div
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ x: 4 }}
             whileTap={{ scale: 0.98 }}
             onClick={onClick}
             className={clsx(
-                "flex items-center space-x-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200",
+                "group flex items-center space-x-3 px-4 py-3.5 mx-2 rounded-xl cursor-pointer transition-all duration-200 relative overflow-hidden",
                 active
-                    ? "bg-primary-600 text-white shadow-lg shadow-primary-500/30 font-medium"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                    ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/20 font-medium"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-primary-600"
             )}
         >
-            <Icon size={20} className={active ? "text-white" : "text-slate-400"} />
-            <span>{label}</span>
+            <Icon size={20} className={clsx("transition-colors", active ? "text-white" : "text-slate-400 group-hover:text-primary-500")} />
+            <span className="relative z-10">{label}</span>
             {active && (
-                <motion.div
-                    layoutId="activeIndicator"
-                    className="absolute right-0 w-1 h-8 bg-white rounded-l-full opacity-20"
-                />
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             )}
         </motion.div>
     );
@@ -76,16 +73,14 @@ const Layout = ({ children }) => {
                     isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >
-                <div className="p-6 flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center transform rotate-12">
-                            <Bus className="text-white" size={20} />
+                <div className="p-6 flex items-center justify-between border-b border-slate-100 mb-2">
+                    <div className="flex items-center space-x-3">
+                        <div className="relative">
+                            <div className="absolute -inset-2 bg-primary-100 rounded-full blur-md opacity-20 animate-pulse"></div>
+                            <img src="/logo.png" alt="Ente Yatra" className="h-12 w-auto object-contain relative z-10" />
                         </div>
-                        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">
-                            Yatra<span className="text-slate-800">Admin</span>
-                        </h1>
                     </div>
-                    <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-2 text-slate-400">
+                    <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-2 text-slate-400 hover:text-slate-600">
                         <X size={24} />
                     </button>
                 </div>

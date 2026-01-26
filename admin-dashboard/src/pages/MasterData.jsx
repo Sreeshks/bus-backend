@@ -3,6 +3,7 @@ import api from '../api/axios';
 import { MapPin, IndianRupee, Search, Plus, Trash2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import SearchableSelect from '../components/SearchableSelect';
 
 const MasterData = () => {
     const [activeTab, setActiveTab] = useState('locations'); // 'locations' or 'fares'
@@ -147,33 +148,25 @@ const MasterData = () => {
                                     <h3 className="font-bold text-lg">Set Route Fare</h3>
                                 </div>
                                 <form onSubmit={handleAddFare} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Source</label>
-                                        <div className="relative">
-                                            <MapPin size={16} className="absolute left-3 top-3 text-slate-400" />
-                                            <input
-                                                list="locs"
-                                                value={fareForm.source}
-                                                onChange={(e) => setFareForm({ ...fareForm, source: e.target.value })}
-                                                placeholder="From"
-                                                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
-                                                required
-                                            />
-                                        </div>
+                                    <div className="relative z-20">
+                                        <SearchableSelect
+                                            label="Source"
+                                            options={locations.map(l => ({ label: l.name, value: l.name }))}
+                                            value={fareForm.source}
+                                            onChange={(val) => setFareForm({ ...fareForm, source: val })}
+                                            placeholder="From"
+                                            icon={MapPin}
+                                        />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Destination</label>
-                                        <div className="relative">
-                                            <MapPin size={16} className="absolute left-3 top-3 text-slate-400" />
-                                            <input
-                                                list="locs"
-                                                value={fareForm.destination}
-                                                onChange={(e) => setFareForm({ ...fareForm, destination: e.target.value })}
-                                                placeholder="To"
-                                                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
-                                                required
-                                            />
-                                        </div>
+                                    <div className="relative z-10">
+                                        <SearchableSelect
+                                            label="Destination"
+                                            options={locations.map(l => ({ label: l.name, value: l.name }))}
+                                            value={fareForm.destination}
+                                            onChange={(val) => setFareForm({ ...fareForm, destination: val })}
+                                            placeholder="To"
+                                            icon={MapPin}
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Amount (₹)</label>
