@@ -14,6 +14,11 @@ const ticketSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User', // The user (conductor) who issued the ticket
     },
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     source: {
         type: String,
         required: true,

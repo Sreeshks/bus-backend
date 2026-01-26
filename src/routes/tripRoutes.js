@@ -5,11 +5,14 @@ const {
     getTripById,
     createTrip,
 } = require('../controllers/tripController');
-const { protect, checkPermission } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/authMiddleware');
+const identifyUser = require('../middleware/identifyUser');
 
 // ...
 
-router.route('/').get(getTrips).post(protect, checkPermission('manage_trips'), createTrip);
+router.route('/')
+    .get(identifyUser, getTrips)
+    .post(protect, createTrip);
 
 
 /**

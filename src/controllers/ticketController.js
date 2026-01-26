@@ -12,10 +12,10 @@ const issueTicket = async (req, res) => {
     let farePerAdult = 0;
 
     // Check direct fare
-    let fareObj = await Fare.findOne({ source, destination });
+    let fareObj = await Fare.findOne({ source, destination, company: req.user.company });
     if (!fareObj) {
         // Check reverse
-        fareObj = await Fare.findOne({ source: destination, destination: source });
+        fareObj = await Fare.findOne({ source: destination, destination: source, company: req.user.company });
     }
 
     if (!fareObj) {
@@ -45,7 +45,10 @@ const issueTicket = async (req, res) => {
         farePerAdult,
         farePerChild,
         totalAmount: totalFare,
-        ticketNumber
+        farePerChild,
+        totalAmount: totalFare,
+        ticketNumber,
+        company: req.user.company
     });
 
     res.status(201).json(ticket);
@@ -55,7 +58,17 @@ const issueTicket = async (req, res) => {
 // @route   GET /api/tickets
 // @access  Private
 const getTickets = async (req, res) => {
-    const tickets = await Ticket.find({ conductor: req.user._id }).sort({ createdAt: -1 });
+    // Show tickets for this company (Admin view all, Conductor view own?? For now admin view all is better for dashboard)
+    // The route in Tickets.jsx is generic /tickets.
+    // Dashboard Tickets.jsx shows RECENT tickets.
+    // If Admin: show all company tickets. If conductor: show own.
+
+    let query = { company: req.user.company };
+    if (req.user.role === 'Conductor') {
+        query.conductor = req.user._id;
+    }
+
+    const tickets = await Ticket.find(query).sort({ createdAt: -1 });
     res.json(tickets);
 };
 

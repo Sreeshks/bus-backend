@@ -8,6 +8,13 @@ const getTrips = async (req, res) => {
 
     let query = {};
 
+    // Multi-tenancy: If Admin/Staff, show only company trips
+    if (req.user && req.user.company && (req.user.role === 'Admin' || req.user.role === 'Manager')) {
+        query.company = req.user.company;
+    }
+    // If specific filter params are passed, they are added to query
+
+
     if (source) {
         query.source = { $regex: source, $options: 'i' };
     }
@@ -55,7 +62,10 @@ const createTrip = async (req, res) => {
         arrivalTime,
         fare,
         seatsAvailable,
-        stops
+        fare,
+        seatsAvailable,
+        stops,
+        company: req.user.company
     });
 
     if (trip) {

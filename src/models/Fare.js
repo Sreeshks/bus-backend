@@ -12,6 +12,11 @@ const fareSchema = mongoose.Schema({
     amount: {
         type: Number,
         required: true,
+    },
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     }
 }, {
     timestamps: true,

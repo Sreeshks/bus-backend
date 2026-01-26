@@ -4,9 +4,10 @@ const {
     createBooking,
     getBookingById,
     getMyBookings,
+    getAllBookings,
     cancelBooking
 } = require('../controllers/bookingController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, checkPermission } = require('../middleware/authMiddleware');
 
 /**
  * @swagger
@@ -49,7 +50,9 @@ const { protect } = require('../middleware/authMiddleware');
  *       201:
  *         description: Booking created
  */
-router.route('/').post(protect, createBooking);
+router.route('/')
+    .post(protect, createBooking)
+    .get(protect, checkPermission('view_reports'), getAllBookings);
 
 /**
  * @swagger

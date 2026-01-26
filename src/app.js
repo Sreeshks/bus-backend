@@ -39,22 +39,14 @@ const swaggerSpecs = require('./config/swagger');
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 
-// Import Routes
-const authRoutes = require('./routes/authRoutes');
-const busRoutes = require('./routes/busRoutes');
-const tripRoutes = require('./routes/tripRoutes');
-const bookingRoutes = require('./routes/bookingRoutes');
-const masterRoutes = require('./routes/masterRoutes');
-const ticketRoutes = require('./routes/ticketRoutes');
-const reportRoutes = require('./routes/reportRoutes');
-
-app.use('/api/auth', authRoutes);
-app.use('/api/buses', busRoutes);
-app.use('/api/trips', tripRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/master', masterRoutes);
-app.use('/api/tickets', ticketRoutes);
-app.use('/api/reports', reportRoutes);
+// Routes
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/buses', require('./routes/busRoutes'));
+app.use('/api/trips', require('./routes/tripRoutes'));
+app.use('/api/bookings', require('./routes/bookingRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/master', require('./routes/masterRoutes'));
+app.use('/api/tickets', require('./routes/ticketRoutes'));
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {

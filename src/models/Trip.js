@@ -6,6 +6,11 @@ const tripSchema = mongoose.Schema({
         ref: 'Bus',
         required: true,
     },
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     source: {
         type: String,
         required: true,

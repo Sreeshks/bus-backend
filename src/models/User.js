@@ -29,6 +29,10 @@ const userSchema = mongoose.Schema({
         type: String,
         // Common permissions: 'manage_users', 'manage_buses', 'manage_trips', 'manage_locations', 'issue_tickets', 'view_reports'
     }],
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', // The Admin User who created this account/company
+    }
 }, {
     timestamps: true,
 });
@@ -37,9 +41,9 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
     if (!this.isModified('password')) {
-        next();
+        return;
     }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);

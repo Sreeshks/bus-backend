@@ -1,69 +1,47 @@
 const Booking = require('../models/Booking');
-const Ticket = require('../models/Ticket');
-
-// @desc    Get daily collection report
-// @route   GET /api/reports/daily
-// @access  Private (Admin/Manager)
-const getDailyReport = async (req, res) => {
-    const { date } = req.query;
-    const searchDate = date ? new Date(date) : new Date();
-
-    // Set time to start and end of day
-    const startOfDay = new Date(searchDate);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(searchDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    // 1. Online Bookings
-    const bookings = await Booking.find({
-        createdAt: { $gte: startOfDay, $lte: endOfDay },
-        paymentStatus: 'Completed' // Assuming we track this, currently default is Pending, let's include all non-failed/refunded
-    });
-
-    // 2. Conductor Tickets
-    const tickets = await Ticket.find({
-        createdAt: { $gte: startOfDay, $lte: endOfDay }
-    });
-
-    const onlineTotal = bookings.reduce((acc, item) => acc + item.totalAmount, 0);
-    const offlineTotal = tickets.reduce((acc, item) => acc + item.totalAmount, 0);
-    const grandTotal = onlineTotal + offlineTotal;
-
-    res.json({
-        date: searchDate.toDateString(),
-        onlineDetails: {
-            count: bookings.length,
-            total: onlineTotal
-        },
-        offlineDetails: {
-            count: tickets.length,
-            total: offlineTotal
-        },
-        grandTotal,
-        bookings,
-        tickets
-    });
-};
+const Bus = require('../models/Bus');
+const Trip = require('../models/Trip');
 
 // @desc    Get dashboard stats
 // @route   GET /api/reports/dashboard
-// @access  Private (Admin)
+// @access  Private/Admin
 const getDashboardStats = async (req, res) => {
-    const totalBookings = await Booking.countDocuments();
-    const totalTickets = await Ticket.countDocuments();
-    const recentBookings = await Booking.find().sort({ createdAt: -1 }).limit(5).populate('user', 'name');
-    const recentTickets = await Ticket.find().sort({ createdAt: -1 }).limit(5).populate('conductor', 'name');
+    try {
+        const companyId = req.user.company;
 
-    res.json({
-        totalBookings,
-        totalTickets,
-        recentBookings,
-        recentTickets
-    });
+        // 1. Total Bookings
+        const totalBookings = await Booking.countDocuments({ company: companyId });
+
+        // 2. Total Revenue
+        const revenueAgg = await Booking.aggregate([
+            { $match: { company: companyId, paymentStatus: { $ne: 'Failed' } } }, // Exclude failed
+            { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+        ]);
+        const totalRevenue = revenueAgg.length > 0 ? revenueAgg[0].total : 0;
+
+        // 3. Total Buses
+        const totalBuses = await Bus.countDocuments({ company: companyId });
+
+        // 4. Recent Bookings (Limit 5)
+        const recentBookings = await Booking.find({ company: companyId })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select('passengerName totalAmount createdAt paymentStatus');
+
+        // 5. Total Trips (Active)
+        const totalTrips = await Trip.countDocuments({ company: companyId });
+
+        res.json({
+            totalBookings,
+            totalTickets: totalBookings, // Assuming 1 ticket per booking for now
+            totalRevenue,
+            totalBuses,
+            totalTrips,
+            recentBookings
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
-module.exports = {
-    getDailyReport,
-    getDashboardStats
-};
+module.exports = { getDashboardStats };

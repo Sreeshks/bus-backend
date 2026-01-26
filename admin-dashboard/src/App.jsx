@@ -11,6 +11,8 @@ import Buses from './pages/Buses';
 import Trips from './pages/Trips';
 import Tickets from './pages/Tickets';
 import MasterData from './pages/MasterData';
+import Users from './pages/Users';
+import Reports from './pages/Reports';
 
 function App() {
 
@@ -28,8 +30,8 @@ function App() {
             <Route path="/trips" element={<Trips />} />
             <Route path="/tickets" element={<Tickets />} />
             <Route path="/master" element={<MasterData />} />
-            <Route path="/users" element={<div>Users (Admin Only)</div>} />
-            <Route path="/reports" element={<div>Reports</div>} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/reports" element={<Reports />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" />} />

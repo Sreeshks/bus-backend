@@ -4,7 +4,8 @@ const busSchema = mongoose.Schema({
     busNumber: {
         type: String,
         required: true,
-        unique: true,
+        required: true,
+        // unique: true // Removed global unique
     },
     name: {
         type: String,
@@ -22,11 +23,19 @@ const busSchema = mongoose.Schema({
     operatorName: {
         type: String,
         required: true
+    },
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     }
 }, {
     timestamps: true,
 });
 
 const Bus = mongoose.model('Bus', busSchema);
+
+// Ensure busNumber is unique per company
+busSchema.index({ busNumber: 1, company: 1 }, { unique: true });
 
 module.exports = Bus;

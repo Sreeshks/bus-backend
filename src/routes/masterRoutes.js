@@ -7,6 +7,7 @@ const {
     getFareQuery
 } = require('../controllers/masterController');
 const { protect, checkPermission } = require('../middleware/authMiddleware');
+const identifyUser = require('../middleware/identifyUser');
 
 
 
@@ -48,7 +49,9 @@ const { protect, checkPermission } = require('../middleware/authMiddleware');
  *       201:
  *         description: Location added
  */
-router.route('/locations').get(getLocations).post(protect, checkPermission('manage_locations'), addLocation);
+router.route('/locations')
+    .get(identifyUser, getLocations)
+    .post(protect, checkPermission('manage_locations'), addLocation);
 
 // Fares
 /**
@@ -92,6 +95,8 @@ router.route('/locations').get(getLocations).post(protect, checkPermission('mana
  *       201:
  *         description: Fare set
  */
-router.route('/fares').get(getFareQuery).post(protect, checkPermission('manage_locations'), addFare);
+router.route('/fares')
+    .get(identifyUser, getFareQuery)
+    .post(protect, checkPermission('manage_locations'), addFare);
 
 module.exports = router;

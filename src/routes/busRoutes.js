@@ -8,6 +8,7 @@ const {
     deleteBus,
 } = require('../controllers/busController');
 const { protect, checkPermission } = require('../middleware/authMiddleware');
+const identifyUser = require('../middleware/identifyUser');
 
 /**
  * @swagger
@@ -58,7 +59,7 @@ const { protect, checkPermission } = require('../middleware/authMiddleware');
  *         description: Bus created
  */
 router.route('/')
-    .get(getBuses)
+    .get(identifyUser, getBuses)
     .post(protect, checkPermission('manage_buses'), createBus);
 
 /**

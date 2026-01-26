@@ -9,13 +9,13 @@ const Fare = require('../models/Fare');
 const addLocation = async (req, res) => {
     const { name, code } = req.body;
 
-    const locationExists = await Location.findOne({ name });
+    const locationExists = await Location.findOne({ name, company: req.user.company });
     if (locationExists) {
         res.status(400);
         throw new Error('Location already exists');
     }
 
-    const location = await Location.create({ name, code });
+    const location = await Location.create({ name, code, company: req.user.company });
     res.status(201).json(location);
 };
 
@@ -23,8 +23,15 @@ const addLocation = async (req, res) => {
 // @route   GET /api/locations
 // @access  Public
 const getLocations = async (req, res) => {
-    const locations = await Location.find({});
-    res.json(locations);
+    // If authenticated (Dashboard or Conductor App)
+    if (req.user && req.user.company) {
+        const locations = await Location.find({ company: req.user.company });
+        res.json(locations);
+    } else {
+        // Public/Generic access... for now return empty or handle differently
+        // Given requirement "admin 2 empty", we likely only want to show company specific
+        res.json([]);
+    }
 };
 
 // --- Fares ---
@@ -36,14 +43,14 @@ const addFare = async (req, res) => {
     const { source, destination, amount } = req.body;
 
     // Check if fare exists for this pair
-    const fareExists = await Fare.findOne({ source, destination });
+    const fareExists = await Fare.findOne({ source, destination, company: req.user.company });
 
     if (fareExists) {
         fareExists.amount = amount;
         const updatedFare = await fareExists.save();
         res.json(updatedFare);
     } else {
-        const fare = await Fare.create({ source, destination, amount });
+        const fare = await Fare.create({ source, destination, amount, company: req.user.company });
         res.status(201).json(fare);
     }
 };
@@ -56,11 +63,15 @@ const getFareQuery = async (req, res) => {
 
     if (!source || !destination) {
         // Return all fares if no query (maybe paginated in future)
-        const fares = await Fare.find({});
+        const query = req.user && req.user.company ? { company: req.user.company } : {};
+        const fares = await Fare.find(query);
         return res.json(fares);
     }
 
-    const fare = await Fare.findOne({ source, destination });
+    const query = { source, destination };
+    if (req.user && req.user.company) query.company = req.user.company;
+
+    const fare = await Fare.findOne(query);
 
     if (fare) {
         res.json(fare);

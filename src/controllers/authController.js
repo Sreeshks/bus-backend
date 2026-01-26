@@ -1,10 +1,11 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const asyncHandler = require('express-async-handler');
 
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
 // @access  Public
-const authUser = async (req, res) => {
+const authUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -17,18 +18,19 @@ const authUser = async (req, res) => {
             isAdmin: user.isAdmin,
             role: user.role,
             permissions: user.permissions,
+            company: user.company,
             token: generateToken(user._id),
         });
     } else {
         res.status(401);
         throw new Error('Invalid email or password');
     }
-};
+});
 
 // @desc    Register a new user (Self-registration, defaults to Employee)
 // @route   POST /api/auth/register
 // @access  Public
-const registerUser = async (req, res) => {
+const registerUser = asyncHandler(async (req, res) => {
     const { name, email, password } = req.body;
 
     const userExists = await User.findOne({ email });
@@ -43,28 +45,34 @@ const registerUser = async (req, res) => {
         name,
         email,
         password,
-        role: 'Employee',
-        permissions: []
+        role: 'Admin', // First user is Admin of their own company
+        permissions: ['manage_users', 'manage_buses', 'manage_trips', 'manage_locations', 'issue_tickets', 'view_reports']
     });
 
     if (user) {
+        // Set company to self for root admin
+        user.company = user._id;
+        await user.save();
+
         res.status(201).json({
             _id: user._id,
             name: user.name,
             email: user.email,
-            isAdmin: user.isAdmin,
+            isAdmin: true,
+            role: user.role,
+            company: user.company,
             token: generateToken(user._id),
         });
     } else {
         res.status(400);
         throw new Error('Invalid user data');
     }
-};
+});
 
 // @desc    Create a new user (Admin function)
 // @route   POST /api/auth/users
 // @access  Private/Admin
-const createUser = async (req, res) => {
+const createUser = asyncHandler(async (req, res) => {
     const { name, email, password, role, permissions } = req.body;
 
     const userExists = await User.findOne({ email });
@@ -79,6 +87,7 @@ const createUser = async (req, res) => {
         password,
         role,
         permissions,
+        company: req.user.company, // Assign to Admin's company
         isAdmin: role === 'Admin' // Sync legacy field
     });
 
@@ -94,20 +103,20 @@ const createUser = async (req, res) => {
         res.status(400);
         throw new Error('Invalid user data');
     }
-};
+});
 
 // @desc    Get all users
 // @route   GET /api/auth/users
 // @access  Private/Admin
-const getUsers = async (req, res) => {
-    const users = await User.find({});
+const getUsers = asyncHandler(async (req, res) => {
+    const users = await User.find({ company: req.user.company });
     res.json(users);
-};
+});
 
 // @desc    Update user rights/permissions
 // @route   PUT /api/auth/users/:id
 // @access  Private/Admin
-const updateUserRights = async (req, res) => {
+const updateUserRights = asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (user) {
@@ -134,6 +143,6 @@ const updateUserRights = async (req, res) => {
         res.status(404);
         throw new Error('User not found');
     }
-};
+});
 
 module.exports = { authUser, registerUser, createUser, getUsers, updateUserRights };

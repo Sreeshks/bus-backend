@@ -33,6 +33,12 @@ const createBooking = async (req, res) => {
         seatNumber,
         paymentMethod,
         totalAmount,
+        trip: tripId,
+        passengerName,
+        seatNumber,
+        paymentMethod,
+        totalAmount,
+        company: trip.company // Booking belongs to the trip's company for reporting
     });
 
     if (booking) {
@@ -54,8 +60,9 @@ const getBookingById = async (req, res) => {
     const booking = await Booking.findById(req.params.id).populate('user', 'name email').populate('trip');
 
     if (booking) {
-        // Ensure user is owner or admin
-        if (booking.user._id.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+        // Ensure user is owner or admin (of the same company) or super admin
+        if (booking.user._id.toString() !== req.user._id.toString() && !req.user.isAdmin &&
+            !(req.user.company && booking.company && req.user.company.toString() === booking.company.toString())) {
             res.status(401);
             throw new Error('Not authorized to view this booking');
         }
@@ -71,6 +78,17 @@ const getBookingById = async (req, res) => {
 // @access  Private
 const getMyBookings = async (req, res) => {
     const bookings = await Booking.find({ user: req.user._id }).populate('trip');
+    res.json(bookings);
+};
+
+// @desc    Get all bookings (Admin/Company)
+// @route   GET /api/bookings
+// @access  Private/Admin
+const getAllBookings = async (req, res) => {
+    // Filter by company
+    const bookings = await Booking.find({ company: req.user.company })
+        .populate('user', 'name email')
+        .populate('trip');
     res.json(bookings);
 };
 
@@ -113,5 +131,6 @@ module.exports = {
     createBooking,
     getBookingById,
     getMyBookings,
+    getAllBookings,
     cancelBooking,
 };
