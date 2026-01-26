@@ -30,8 +30,11 @@ class Ticket {
       adultCount: json['adultCount'] ?? 0,
       childCount: json['childCount'] ?? 0,
       totalAmount: (json['totalAmount'] ?? 0).toDouble(),
-      busId:
-          json['bus'] ?? '', // Sometimes object, sometimes ID, simple handling
+      busId: (json['bus'] is Map)
+          ? (json['bus']['name'] != null
+                ? '${json['bus']['name']} (${json['bus']['busNumber']})'
+                : json['bus']['_id'] ?? '')
+          : (json['bus'] ?? ''),
       createdAt: json['createdAt'] ?? '',
     );
   }
