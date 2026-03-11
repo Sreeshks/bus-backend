@@ -76,8 +76,61 @@ const createTrip = async (req, res) => {
     }
 };
 
+// @desc    Update a trip
+// @route   PUT /api/trips/:id
+// @access  Private/Admin
+const updateTrip = async (req, res) => {
+    const trip = await Trip.findById(req.params.id);
+
+    if (trip) {
+        // Enforce company ownership
+        if (trip.company.toString() !== req.user.company.toString()) {
+             res.status(401);
+             throw new Error('Not authorized to update this trip');
+        }
+
+        trip.bus = req.body.busId || trip.bus;
+        trip.source = req.body.source || trip.source;
+        trip.destination = req.body.destination || trip.destination;
+        trip.departureTime = req.body.departureTime || trip.departureTime;
+        trip.arrivalTime = req.body.arrivalTime || trip.arrivalTime;
+        trip.fare = req.body.fare || trip.fare;
+        trip.seatsAvailable = req.body.seatsAvailable || trip.seatsAvailable;
+        trip.stops = req.body.stops || trip.stops;
+
+        const updatedTrip = await trip.save();
+        res.json(updatedTrip);
+    } else {
+        res.status(404);
+        throw new Error('Trip not found');
+    }
+};
+
+// @desc    Delete a trip
+// @route   DELETE /api/trips/:id
+// @access  Private/Admin
+const deleteTrip = async (req, res) => {
+    const trip = await Trip.findById(req.params.id);
+
+    if (trip) {
+        // Enforce company ownership
+        if (trip.company.toString() !== req.user.company.toString()) {
+             res.status(401);
+             throw new Error('Not authorized to delete this trip');
+        }
+
+        await trip.deleteOne();
+        res.json({ message: 'Trip removed' });
+    } else {
+        res.status(404);
+        throw new Error('Trip not found');
+    }
+};
+
 module.exports = {
     getTrips,
     getTripById,
     createTrip,
+    updateTrip,
+    deleteTrip,
 };

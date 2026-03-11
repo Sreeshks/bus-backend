@@ -31,13 +31,46 @@ const getDashboardStats = async (req, res) => {
         // 5. Total Trips (Active)
         const totalTrips = await Trip.countDocuments({ company: companyId });
 
+        // 6. Total Tickets
+        const Ticket = require('../models/Ticket');
+        const totalTickets = await Ticket.countDocuments({ company: companyId });
+
+        // 7. Revenue By Day (Last 7 Days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const dailyRevenue = await Booking.aggregate([
+            {
+                $match: {
+                    company: companyId,
+                    paymentStatus: { $ne: 'Failed' },
+                    createdAt: { $gte: sevenDaysAgo }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    revenue: { $sum: "$totalAmount" }
+                }
+            },
+            { $sort: { "_id": 1 } }
+        ]);
+
+        // Format for recharts
+        const revenueByDay = dailyRevenue.map(item => ({
+            name: new Date(item._id).toLocaleDateString('en-US', { weekday: 'short' }),
+            revenue: item.revenue
+        }));
+
         res.json({
             totalBookings,
-            totalTickets: totalBookings, // Assuming 1 ticket per booking for now
+            totalTickets,
             totalRevenue,
             totalBuses,
             totalTrips,
-            recentBookings
+            recentBookings,
+            revenueByDay
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

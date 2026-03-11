@@ -1,25 +1,22 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '../api/axios';
-import { MapPin, IndianRupee, Search, Plus, Trash2, ArrowRight } from 'lucide-react';
+import { MapPin, IndianRupee, Search, Trash2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import SearchableSelect from '../components/SearchableSelect';
 
 const MasterData = () => {
-    const [activeTab, setActiveTab] = useState('locations'); // 'locations' or 'fares'
+    const [activeTab, setActiveTab] = useState('locations');
     const [locations, setLocations] = useState([]);
     const [fares, setFares] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    // Location Form State
     const [locForm, setLocForm] = useState({ name: '', code: '' });
     const [locSearch, setLocSearch] = useState('');
 
-    // Fare Form State
     const [fareForm, setFareForm] = useState({ source: '', destination: '', amount: '' });
 
     const fetchData = async () => {
-        setLoading(true);
         try {
             const [locRes, fareRes] = await Promise.all([
                 api.get('/master/locations'),
@@ -73,27 +70,43 @@ const MasterData = () => {
         );
     }, [locations, locSearch]);
 
+    const tabs = [
+        { key: 'locations', label: 'Bus Stops', count: locations.length },
+        { key: 'fares', label: 'Route Fares', count: fares.length },
+    ];
+
     return (
         <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-slate-900">Master Data Management</h2>
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+                <h2 className="text-xl font-bold text-slate-900">Master Data</h2>
+                <p className="text-sm text-slate-500 mt-0.5">Manage bus stops, locations, and route fares</p>
+            </motion.div>
 
             {/* Tabs */}
             <div className="flex space-x-1 bg-slate-100 p-1 rounded-xl w-fit">
-                <button
-                    onClick={() => setActiveTab('locations')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'locations' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Bus Stops / Locations
-                </button>
-                <button
-                    onClick={() => setActiveTab('fares')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'fares' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Route Fares
-                </button>
+                {tabs.map(tab => (
+                    <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 ${
+                            activeTab === tab.key
+                                ? 'bg-white text-primary-600 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                    >
+                        <span>{tab.label}</span>
+                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                            activeTab === tab.key
+                                ? 'bg-primary-50 text-primary-600'
+                                : 'bg-slate-200 text-slate-500'
+                        }`}>
+                            {tab.count}
+                        </span>
+                    </button>
+                ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
                 {/* Left Panel: Forms */}
                 <div className="lg:col-span-1">
@@ -101,36 +114,38 @@ const MasterData = () => {
                         {activeTab === 'locations' ? (
                             <motion.div
                                 key="loc-form"
-                                initial={{ opacity: 0, x: -20 }}
+                                initial={{ opacity: 0, x: -16 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"
+                                exit={{ opacity: 0, x: -16 }}
+                                className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"
                             >
-                                <div className="flex items-center space-x-2 mb-4 text-primary-600">
-                                    <MapPin size={20} />
-                                    <h3 className="font-bold text-lg">Add New Stop</h3>
+                                <div className="flex items-center space-x-2 mb-4">
+                                    <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center">
+                                        <MapPin size={16} className="text-primary-600" />
+                                    </div>
+                                    <h3 className="font-bold text-sm text-slate-900">Add New Stop</h3>
                                 </div>
-                                <form onSubmit={handleAddLocation} className="space-y-4">
+                                <form onSubmit={handleAddLocation} className="space-y-3">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Place Name</label>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Place Name</label>
                                         <input
                                             value={locForm.name}
                                             onChange={(e) => setLocForm({ ...locForm, name: e.target.value })}
                                             placeholder="e.g. Thrissur"
-                                            className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+                                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-[3px] focus:ring-primary-100 focus:border-primary-400 transition-all text-sm"
                                             required
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Code / Short Name</label>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Code / Short Name</label>
                                         <input
                                             value={locForm.code}
                                             onChange={(e) => setLocForm({ ...locForm, code: e.target.value })}
                                             placeholder="e.g. TCR"
-                                            className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none uppercase"
+                                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-[3px] focus:ring-primary-100 focus:border-primary-400 transition-all text-sm uppercase"
                                         />
                                     </div>
-                                    <button type="submit" className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-xl font-medium shadow-lg shadow-primary-500/20 transition-all">
+                                    <button type="submit" className="w-full bg-gradient-to-r from-primary-600 to-primary-500 text-white py-2.5 rounded-xl font-medium text-sm hover:from-primary-700 hover:to-primary-600 shadow-lg shadow-primary-500/20 transition-all">
                                         Add Location
                                     </button>
                                 </form>
@@ -138,16 +153,18 @@ const MasterData = () => {
                         ) : (
                             <motion.div
                                 key="fare-form"
-                                initial={{ opacity: 0, x: -20 }}
+                                initial={{ opacity: 0, x: -16 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"
+                                exit={{ opacity: 0, x: -16 }}
+                                className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"
                             >
-                                <div className="flex items-center space-x-2 mb-4 text-primary-600">
-                                    <IndianRupee size={20} />
-                                    <h3 className="font-bold text-lg">Set Route Fare</h3>
+                                <div className="flex items-center space-x-2 mb-4">
+                                    <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
+                                        <IndianRupee size={16} className="text-emerald-600" />
+                                    </div>
+                                    <h3 className="font-bold text-sm text-slate-900">Set Route Fare</h3>
                                 </div>
-                                <form onSubmit={handleAddFare} className="space-y-4">
+                                <form onSubmit={handleAddFare} className="space-y-3">
                                     <div className="relative z-20">
                                         <SearchableSelect
                                             label="Source"
@@ -169,20 +186,17 @@ const MasterData = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Amount (₹)</label>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount (₹)</label>
                                         <input
                                             type="number"
                                             value={fareForm.amount}
                                             onChange={(e) => setFareForm({ ...fareForm, amount: e.target.value })}
                                             placeholder="0.00"
-                                            className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+                                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-[3px] focus:ring-primary-100 focus:border-primary-400 transition-all text-sm"
                                             required
                                         />
                                     </div>
-                                    <datalist id="locs">
-                                        {locations.map(l => <option key={l._id} value={l.name}>{l.code}</option>)}
-                                    </datalist>
-                                    <button type="submit" className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-xl font-medium shadow-lg shadow-primary-500/20 transition-all">
+                                    <button type="submit" className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white py-2.5 rounded-xl font-medium text-sm hover:from-emerald-700 hover:to-emerald-600 shadow-lg shadow-emerald-500/20 transition-all">
                                         Update Fare
                                     </button>
                                 </form>
@@ -193,77 +207,89 @@ const MasterData = () => {
 
                 {/* Right Panel: Lists */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden h-full min-h-[500px]">
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-[450px]">
                         {activeTab === 'locations' ? (
-                            <div className="p-4">
-                                <div className="flex items-center space-x-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 mb-4">
-                                    <Search size={18} className="text-slate-400" />
-                                    <input
-                                        value={locSearch}
-                                        onChange={(e) => setLocSearch(e.target.value)}
-                                        placeholder="Search by name or code..."
-                                        className="bg-transparent outline-none w-full text-sm"
-                                    />
+                            <div className="flex flex-col h-full">
+                                <div className="p-4 border-b border-slate-50">
+                                    <div className="flex items-center space-x-2 bg-slate-50 border border-slate-100 rounded-xl px-3.5 py-2.5">
+                                        <Search size={15} className="text-slate-400 shrink-0" />
+                                        <input
+                                            value={locSearch}
+                                            onChange={(e) => setLocSearch(e.target.value)}
+                                            placeholder="Search by name or code..."
+                                            className="bg-transparent outline-none w-full text-sm text-slate-700 placeholder:text-slate-400"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="overflow-y-auto max-h-[500px]">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead className="bg-slate-50 sticky top-0">
+                                <div className="overflow-y-auto max-h-[480px] custom-scrollbar">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-slate-50/80 sticky top-0">
                                             <tr>
-                                                <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Place Name</th>
-                                                <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Code</th>
-                                                <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Action</th>
+                                                <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Place Name</th>
+                                                <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Code</th>
+                                                <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-100">
+                                        <tbody className="divide-y divide-slate-50">
                                             {filteredLocations.map(loc => (
-                                                <tr key={loc._id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-4 py-3 font-medium text-slate-900">{loc.name}</td>
-                                                    <td className="px-4 py-3">
-                                                        <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg">{loc.code || 'N/A'}</span>
+                                                <tr key={loc._id} className="hover:bg-slate-50/50 transition-colors">
+                                                    <td className="px-5 py-3 font-medium text-sm text-slate-800">{loc.name}</td>
+                                                    <td className="px-5 py-3">
+                                                        <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-md">{loc.code || 'N/A'}</span>
                                                     </td>
-                                                    <td className="px-4 py-3 text-right">
-                                                        <button className="text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                                                    <td className="px-5 py-3 text-right">
+                                                        <button className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                                            <Trash2 size={14} />
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))}
                                             {filteredLocations.length === 0 && (
-                                                <tr><td colSpan="3" className="text-center py-8 text-slate-400">No locations found</td></tr>
+                                                <tr>
+                                                    <td colSpan="3" className="text-center py-12">
+                                                        <MapPin size={24} className="text-slate-200 mx-auto mb-2" />
+                                                        <p className="text-sm text-slate-400">No locations found</p>
+                                                    </td>
+                                                </tr>
                                             )}
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                         ) : (
-                            <div className="p-0">
-                                <div className="overflow-y-auto max-h-[600px]">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead className="bg-slate-50 sticky top-0">
-                                            <tr>
-                                                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Route</th>
-                                                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Fare</th>
+                            <div className="overflow-y-auto max-h-[560px] custom-scrollbar">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-50/80 sticky top-0">
+                                        <tr>
+                                            <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Route</th>
+                                            <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Fare</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {fares.map(fare => (
+                                            <tr key={fare._id} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="px-5 py-3.5">
+                                                    <div className="flex items-center space-x-2.5">
+                                                        <span className="font-medium text-sm text-slate-800">{fare.source}</span>
+                                                        <ArrowRight size={13} className="text-slate-300" />
+                                                        <span className="font-medium text-sm text-slate-800">{fare.destination}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-5 py-3.5 text-right">
+                                                    <span className="text-base font-bold text-emerald-600">₹{fare.amount}</span>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {fares.map(fare => (
-                                                <tr key={fare._id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center space-x-3">
-                                                            <span className="font-medium text-slate-900">{fare.source}</span>
-                                                            <ArrowRight size={14} className="text-slate-400" />
-                                                            <span className="font-medium text-slate-900">{fare.destination}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <span className="text-lg font-bold text-emerald-600">₹{fare.amount}</span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                            {fares.length === 0 && (
-                                                <tr><td colSpan="2" className="text-center py-8 text-slate-400">No fares defined yet</td></tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        ))}
+                                        {fares.length === 0 && (
+                                            <tr>
+                                                <td colSpan="2" className="text-center py-12">
+                                                    <IndianRupee size={24} className="text-slate-200 mx-auto mb-2" />
+                                                    <p className="text-sm text-slate-400">No fares defined yet</p>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </div>

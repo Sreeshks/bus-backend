@@ -88,6 +88,15 @@ class TicketRepository {
     }
   }
 
+  Future<Map<String, dynamic>> getDailyBill() async {
+    try {
+      final response = await _apiClient.client.get('/tickets/daily-bill');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      return {'totalAmount': 0, 'ticketsCount': 0, 'adultsCount': 0, 'childrenCount': 0};
+    }
+  }
+
   // --- OFFLINE & SYNC LOGIC ---
 
   Future<void> downloadMasterData(Function(int progress) onProgress) async {

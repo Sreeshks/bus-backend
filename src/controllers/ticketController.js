@@ -72,7 +72,51 @@ const getTickets = async (req, res) => {
     res.json(tickets);
 };
 
+// @desc    Get daily bill for conductor
+// @route   GET /api/tickets/daily-bill
+// @access  Private (Conductor/Admin)
+const getDailyBill = async (req, res) => {
+    try {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const match = {
+            company: req.user.company,
+            createdAt: { $gte: startOfDay, $lte: endOfDay }
+        };
+
+        if (req.user.role === 'Conductor') {
+            match.conductor = req.user._id;
+        }
+
+        const stats = await Ticket.aggregate([
+            { $match: match },
+            {
+                $group: {
+                    _id: null,
+                    totalAmount: { $sum: "$totalAmount" },
+                    ticketsCount: { $sum: 1 },
+                    adultsCount: { $sum: "$adultCount" },
+                    childrenCount: { $sum: "$childCount" }
+                }
+            }
+        ]);
+
+        if (stats.length > 0) {
+            res.json(stats[0]);
+        } else {
+            res.json({ totalAmount: 0, ticketsCount: 0, adultsCount: 0, childrenCount: 0 });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     issueTicket,
-    getTickets
+    getTickets,
+    getDailyBill
 };

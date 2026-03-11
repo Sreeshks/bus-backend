@@ -9,7 +9,9 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Buses from './pages/Buses';
 import Trips from './pages/Trips';
+import Bookings from './pages/Bookings';
 import Tickets from './pages/Tickets';
+import Settings from './pages/Settings';
 import MasterData from './pages/MasterData';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
@@ -28,7 +30,9 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/buses" element={<Buses />} />
             <Route path="/trips" element={<Trips />} />
+            <Route path="/bookings" element={<Bookings />} />
             <Route path="/tickets" element={<Tickets />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/master" element={<MasterData />} />
             <Route path="/users" element={<Users />} />
             <Route path="/reports" element={<Reports />} />

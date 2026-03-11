@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { Plus, User, Shield, Key, Edit2 } from 'lucide-react';
+import { Plus, User, Shield, Key, Edit2, Mail, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const Users = () => {
     const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({
         name: '', email: '', password: '', role: 'Conductor', permissions: []
@@ -15,7 +16,13 @@ const Users = () => {
 
     const roles = ['Admin', 'Manager', 'Conductor', 'Employee'];
 
-    // Auto-assign permissions based on role for simplicity
+    const roleColors = {
+        'Admin': { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-100', avatar: 'from-purple-500 to-purple-600', shadow: 'shadow-purple-500/20' },
+        'Manager': { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-100', avatar: 'from-blue-500 to-blue-600', shadow: 'shadow-blue-500/20' },
+        'Conductor': { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100', avatar: 'from-emerald-500 to-emerald-600', shadow: 'shadow-emerald-500/20' },
+        'Employee': { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200', avatar: 'from-slate-400 to-slate-500', shadow: 'shadow-slate-400/20' },
+    };
+
     const getPermissionsForRole = (role) => {
         switch (role) {
             case 'Admin': return ['manage_users', 'manage_buses', 'manage_trips', 'manage_locations', 'issue_tickets', 'view_reports'];
@@ -31,6 +38,8 @@ const Users = () => {
             setUsers(data);
         } catch (error) {
             toast.error('Failed to load users');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -47,7 +56,6 @@ const Users = () => {
             };
 
             if (isEditing) {
-                // For edit, we might not send password unless changed, but backend handles it gracefully
                 if (!payload.password) delete payload.password;
                 await api.put(`/auth/users/${editId}`, payload);
                 toast.success('User updated successfully');
@@ -67,7 +75,7 @@ const Users = () => {
         setFormData({
             name: user.name,
             email: user.email,
-            password: '', // Don't show old password
+            password: '',
             role: user.role,
             permissions: user.permissions
         });
@@ -84,140 +92,192 @@ const Users = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-900">User Management</h2>
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
+                <div>
+                    <h2 className="text-xl font-bold text-slate-900">User Management</h2>
+                    <p className="text-sm text-slate-500 mt-0.5">Manage team members and permissions</p>
+                </div>
                 <button
                     onClick={() => { resetForm(); setShowModal(true); }}
-                    className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors shadow-lg shadow-primary-500/30"
+                    className="bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white px-4 py-2.5 rounded-xl flex items-center space-x-2 transition-all shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:-translate-y-0.5 text-sm font-medium"
                 >
-                    <Plus size={18} />
+                    <Plus size={16} />
                     <span>Create User</span>
                 </button>
-            </div>
+            </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {users.map(user => (
-                    <motion.div
-                        key={user._id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100">
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="skeleton h-11 w-11 rounded-xl"></div>
+                                <div className="space-y-2 flex-1">
+                                    <div className="skeleton h-4 w-28"></div>
+                                    <div className="skeleton h-3 w-36"></div>
+                                </div>
+                            </div>
+                            <div className="skeleton h-6 w-20 rounded-lg"></div>
+                        </div>
+                    ))}
+                </div>
+            ) : users.length === 0 ? (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-white rounded-2xl border border-slate-100 p-12 text-center"
+                >
+                    <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4">
+                        <User size={28} className="text-slate-300" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-1">No team members</h3>
+                    <p className="text-sm text-slate-500 mb-4">Create your first user to get started</p>
+                    <button
+                        onClick={() => { resetForm(); setShowModal(true); }}
+                        className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
                     >
-                        <div className="flex items-center space-x-4 mb-4">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${user.role === 'Admin' ? 'bg-purple-100 text-purple-600' :
-                                user.role === 'Conductor' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'
-                                }`}>
-                                {user.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-slate-900">{user.name}</h3>
-                                <p className="text-sm text-slate-500">{user.email}</p>
-                            </div>
-                        </div>
+                        Create First User
+                    </button>
+                </motion.div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {users.map((user, i) => {
+                        const colors = roleColors[user.role] || roleColors['Employee'];
+                        return (
+                            <motion.div
+                                key={user._id}
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.03 }}
+                                className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group"
+                            >
+                                <div className="flex items-center space-x-3 mb-3">
+                                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${colors.avatar} ${colors.shadow} shadow-lg flex items-center justify-center text-white text-sm font-bold`}>
+                                        {user.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-bold text-sm text-slate-900 truncate">{user.name}</h3>
+                                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                                    </div>
+                                </div>
 
-                        <div className="flex flex-wrap gap-2 mb-4">
-                            <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${user.role === 'Admin' ? 'bg-purple-50 text-purple-700' : 'bg-slate-100 text-slate-700'
-                                }`}>
-                                {user.role}
-                            </span>
-                            {user.isAdmin && <span className="px-2 py-1 rounded-lg text-xs font-semibold bg-red-50 text-red-700">Super Admin</span>}
-                        </div>
+                                <div className="flex flex-wrap gap-1.5 mb-4">
+                                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${colors.bg} ${colors.text} ${colors.border}`}>
+                                        {user.role}
+                                    </span>
+                                    {user.isAdmin && (
+                                        <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-red-50 text-red-700 border border-red-100">
+                                            Super Admin
+                                        </span>
+                                    )}
+                                </div>
 
-                        <div className="pt-4 border-t border-slate-50 flex justify-end">
-                            <button onClick={() => handleEdit(user)} className="text-primary-600 hover:bg-primary-50 p-2 rounded-lg transition-colors text-sm font-medium flex items-center space-x-1">
-                                <Edit2 size={16} />
-                                <span>Edit Details</span>
-                            </button>
-                        </div>
-                    </motion.div>
-                ))}
-            </div>
+                                <div className="pt-3 border-t border-slate-50">
+                                    <button
+                                        onClick={() => handleEdit(user)}
+                                        className="text-primary-600 hover:bg-primary-50 p-2 rounded-lg transition-colors text-xs font-medium flex items-center space-x-1.5 w-full justify-center"
+                                    >
+                                        <Edit2 size={13} />
+                                        <span>Edit Details</span>
+                                    </button>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            )}
 
+            {/* Modal */}
             <AnimatePresence>
                 {showModal && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden"
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
                         >
-                            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                                <h3 className="text-lg font-bold text-slate-900">{isEditing ? 'Edit User' : 'Create New User'}</h3>
-                                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">×</button>
-                            </div>
-                            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                            <div className="bg-gradient-to-r from-primary-600 to-primary-500 p-5 flex justify-between items-center">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                                    <h3 className="text-base font-bold text-white">{isEditing ? 'Edit User' : 'Create New User'}</h3>
+                                    <p className="text-xs text-white/70 mt-0.5">{isEditing ? 'Update user details' : 'Add a new team member'}</p>
+                                </div>
+                                <button onClick={() => setShowModal(false)} className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
                                     <div className="relative">
-                                        <User size={18} className="absolute left-3 top-2.5 text-slate-400" />
+                                        <User size={15} className="absolute left-3.5 top-3 text-slate-400" />
                                         <input
                                             value={formData.name}
                                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                            className="w-full pl-10 pr-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-[3px] focus:ring-primary-100 focus:border-primary-400 transition-all text-sm"
                                             placeholder="John Doe"
                                             required
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
                                     <div className="relative">
-                                        <User size={18} className="absolute left-3 top-2.5 text-slate-400" />
+                                        <Mail size={15} className="absolute left-3.5 top-3 text-slate-400" />
                                         <input
                                             type="email"
                                             value={formData.email}
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                            className="w-full pl-10 pr-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-[3px] focus:ring-primary-100 focus:border-primary-400 transition-all text-sm"
                                             placeholder="john@yatra.com"
                                             required
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
                                         {isEditing ? 'New Password (leave blank to keep)' : 'Password'}
                                     </label>
                                     <div className="relative">
-                                        <Key size={18} className="absolute left-3 top-2.5 text-slate-400" />
+                                        <Key size={15} className="absolute left-3.5 top-3 text-slate-400" />
                                         <input
                                             type="password"
                                             value={formData.password}
                                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                            className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                            className="w-full pl-10 pr-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-[3px] focus:ring-primary-100 focus:border-primary-400 transition-all text-sm"
                                             placeholder="••••••••"
                                             required={!isEditing}
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Role</label>
                                     <div className="relative">
-                                        <Shield size={18} className="absolute left-3 top-2.5 text-slate-400" />
+                                        <Shield size={15} className="absolute left-3.5 top-3 text-slate-400" />
                                         <select
                                             value={formData.role}
                                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                            className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none appearance-none bg-white"
+                                            className="w-full pl-10 pr-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-[3px] focus:ring-primary-100 focus:border-primary-400 transition-all text-sm bg-white appearance-none"
                                         >
                                             {roles.map(r => <option key={r} value={r}>{r}</option>)}
                                         </select>
                                     </div>
-                                    <p className="text-xs text-slate-500 mt-2">
-                                        Assigning role <b>{formData.role}</b> will automatically grant relevant permissions.
+                                    <p className="text-[11px] text-slate-400 mt-1.5">
+                                        Role <b className="text-slate-500">{formData.role}</b> grants relevant permissions automatically.
                                     </p>
                                 </div>
 
-                                <div className="pt-4 flex justify-end space-x-3">
+                                <div className="pt-3 flex justify-end space-x-3">
                                     <button
                                         type="button"
                                         onClick={() => setShowModal(false)}
-                                        className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                        className="px-4 py-2.5 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors text-sm font-medium"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30"
+                                        className="px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 transition-all shadow-lg shadow-primary-500/25 text-sm font-medium"
                                     >
                                         {isEditing ? 'Update User' : 'Create User'}
                                     </button>

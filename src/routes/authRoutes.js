@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authUser, registerUser, createUser, getUsers, updateUserRights } = require('../controllers/authController');
+const { authUser, registerUser, createUser, getUsers, updateUserRights, updateProfile } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 /**
@@ -12,6 +12,20 @@ const { protect, admin } = require('../middleware/authMiddleware');
 
 router.post('/register', registerUser);
 router.post('/login', authUser);
+
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   put:
+ *     summary: Update own profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ */
+router.route('/profile').put(protect, updateProfile);
 
 /**
  * @swagger

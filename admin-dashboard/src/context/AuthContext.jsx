@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, useContext } from 'react';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -41,5 +41,7 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+
+export const useAuth = () => useContext(AuthContext);
 
 export default AuthContext;

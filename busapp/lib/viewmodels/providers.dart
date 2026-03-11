@@ -65,3 +65,7 @@ final busesProvider = FutureProvider<List<Bus>>((ref) async {
 final ticketsProvider = FutureProvider<List<Ticket>>((ref) async {
   return ref.read(ticketRepositoryProvider).getMyTickets();
 });
+
+final dailyBillProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  return ref.read(ticketRepositoryProvider).getDailyBill();
+});

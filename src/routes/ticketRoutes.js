@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { issueTicket, getTickets } = require('../controllers/ticketController');
+const { issueTicket, getTickets, getDailyBill } = require('../controllers/ticketController');
 const { protect, checkPermission } = require('../middleware/authMiddleware');
 
 /**
@@ -53,5 +53,7 @@ const { protect, checkPermission } = require('../middleware/authMiddleware');
 router.route('/')
     .get(protect, getTickets)
     .post(protect, checkPermission('issue_tickets'), issueTicket);
+
+router.get('/daily-bill', protect, getDailyBill);
 
 module.exports = router;
