@@ -52,6 +52,10 @@ const ticketSchema = mongoose.Schema({
         required: true,
         unique: true
     },
+    payMode: {
+        type: String,
+        default: 'Cash',
+    },
     issuedAt: {
         type: Date,
         default: Date.now

@@ -88,9 +88,39 @@ const getFareQuery = async (req, res) => {
     }
 };
 
+// @desc    Delete a location
+// @route   DELETE /api/master/locations/:id
+// @access  Private/Admin
+const deleteLocation = async (req, res) => {
+    const location = await Location.findById(req.params.id);
+    if (location) {
+        await location.deleteOne();
+        res.json({ message: 'Location deleted successfully' });
+    } else {
+        res.status(404);
+        throw new Error('Location not found');
+    }
+};
+
+// @desc    Delete a fare
+// @route   DELETE /api/master/fares/:id
+// @access  Private/Admin
+const deleteFare = async (req, res) => {
+    const fare = await Fare.findById(req.params.id);
+    if (fare) {
+        await fare.deleteOne();
+        res.json({ message: 'Fare deleted successfully' });
+    } else {
+        res.status(404);
+        throw new Error('Fare not found');
+    }
+};
+
 module.exports = {
     addLocation,
     getLocations,
     addFare,
-    getFareQuery
+    getFareQuery,
+    deleteLocation,
+    deleteFare
 };

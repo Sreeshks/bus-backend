@@ -43,9 +43,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  void logout() {
-    state = AuthState();
-    // Also clear token in ApiClient in real app
+  void logout() async {
+    try {
+      await _repo.logout();
+    } finally {
+      state = AuthState();
+    }
   }
 }
 
@@ -68,4 +71,8 @@ final ticketsProvider = FutureProvider<List<Ticket>>((ref) async {
 
 final dailyBillProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return ref.read(ticketRepositoryProvider).getDailyBill();
+});
+
+final payModesProvider = FutureProvider<List<PayMode>>((ref) async {
+  return ref.read(ticketRepositoryProvider).getPayModes();
 });

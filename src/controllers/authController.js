@@ -8,7 +8,7 @@ const asyncHandler = require('express-async-handler');
 const authUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).populate('assignedBus', 'name busNumber _id');
 
     if (user && (await user.matchPassword(password))) {
         res.json({
@@ -19,6 +19,7 @@ const authUser = asyncHandler(async (req, res) => {
             role: user.role,
             permissions: user.permissions,
             company: user.company,
+            assignedBus: user.assignedBus,
             token: generateToken(user._id),
         });
     } else {
@@ -73,7 +74,7 @@ const registerUser = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/users
 // @access  Private/Admin
 const createUser = asyncHandler(async (req, res) => {
-    const { name, email, password, role, permissions } = req.body;
+    const { name, email, password, role, permissions, assignedBus } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -88,16 +89,19 @@ const createUser = asyncHandler(async (req, res) => {
         role,
         permissions,
         company: req.user.company, // Assign to Admin's company
-        isAdmin: role === 'Admin' // Sync legacy field
+        isAdmin: role === 'Admin', // Sync legacy field
+        assignedBus: assignedBus || null,
     });
 
     if (user) {
+        await user.populate('assignedBus', 'name busNumber _id');
         res.status(201).json({
             _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,
-            permissions: user.permissions
+            permissions: user.permissions,
+            assignedBus: user.assignedBus,
         });
     } else {
         res.status(400);
@@ -109,7 +113,7 @@ const createUser = asyncHandler(async (req, res) => {
 // @route   GET /api/auth/users
 // @access  Private/Admin
 const getUsers = asyncHandler(async (req, res) => {
-    const users = await User.find({ company: req.user.company });
+    const users = await User.find({ company: req.user.company }).populate('assignedBus', 'name busNumber _id');
     res.json(users);
 });
 
@@ -126,18 +130,25 @@ const updateUserRights = asyncHandler(async (req, res) => {
         user.permissions = req.body.permissions || user.permissions;
         user.isAdmin = user.role === 'Admin'; // Sync legacy field
 
+        // Handle assignedBus — allow setting to null to unassign
+        if (req.body.assignedBus !== undefined) {
+            user.assignedBus = req.body.assignedBus || null;
+        }
+
         if (req.body.password) {
             user.password = req.body.password;
         }
 
         const updatedUser = await user.save();
+        await updatedUser.populate('assignedBus', 'name busNumber _id');
 
         res.json({
             _id: updatedUser._id,
             name: updatedUser.name,
             email: updatedUser.email,
             role: updatedUser.role,
-            permissions: updatedUser.permissions
+            permissions: updatedUser.permissions,
+            assignedBus: updatedUser.assignedBus,
         });
     } else {
         res.status(404);
@@ -177,4 +188,48 @@ const updateProfile = asyncHandler(async (req, res) => {
     }
 });
 
-module.exports = { authUser, registerUser, createUser, getUsers, updateUserRights, updateProfile };
+// @desc    Auth with Google (Firebase)
+// @route   POST /api/auth/google
+// @access  Public
+const googleLogin = asyncHandler(async (req, res) => {
+    const { name, email, photoURL, uid } = req.body;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+        // Create user if they don't exist
+        user = await User.create({
+            name,
+            email,
+            password: uid, // Use UID as a placeholder password
+            role: 'Admin', // Default to Admin for this dashboard
+            permissions: ['manage_users', 'manage_buses', 'manage_trips', 'manage_locations', 'issue_tickets', 'view_reports'],
+            isAdmin: true,
+            photoURL
+        });
+        
+        // Set company to self for root admin
+        user.company = user._id;
+        await user.save();
+    } else {
+        // Update photo if it changed
+        if (photoURL && user.photoURL !== photoURL) {
+            user.photoURL = photoURL;
+            await user.save();
+        }
+    }
+
+    res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        role: user.role,
+        permissions: user.permissions,
+        company: user.company,
+        photoURL: user.photoURL,
+        token: generateToken(user._id),
+    });
+});
+
+module.exports = { authUser, registerUser, createUser, getUsers, updateUserRights, updateProfile, googleLogin };

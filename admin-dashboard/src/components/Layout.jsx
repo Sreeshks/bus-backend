@@ -148,9 +148,13 @@ const Layout = ({ children }) => {
                     {!collapsed ? (
                         <>
                             <div className="flex items-center p-2.5 mb-2 rounded-xl bg-slate-50/80">
-                                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
-                                    {user?.name?.charAt(0).toUpperCase()}
-                                </div>
+                                {user?.photoURL ? (
+                                    <img src={user.photoURL} alt={user.name} className="w-9 h-9 rounded-lg object-cover shadow-sm" />
+                                ) : (
+                                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                                        {user?.name?.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
                                 <div className="ml-2.5 overflow-hidden flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-slate-800 truncate">{user?.name}</p>
                                     <p className="text-[11px] text-slate-400 truncate">{user?.role || 'Admin'}</p>
@@ -166,9 +170,13 @@ const Layout = ({ children }) => {
                         </>
                     ) : (
                         <div className="flex flex-col items-center space-y-2">
-                            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-bold shadow-sm" title={user?.name}>
-                                {user?.name?.charAt(0).toUpperCase()}
-                            </div>
+                            {user?.photoURL ? (
+                                <img src={user.photoURL} alt={user.name} className="w-9 h-9 rounded-lg object-cover shadow-sm" title={user.name} />
+                            ) : (
+                                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-bold shadow-sm" title={user?.name}>
+                                    {user?.name?.charAt(0).toUpperCase()}
+                                </div>
+                            )}
                             <button
                                 onClick={handleLogout}
                                 className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -210,9 +218,13 @@ const Layout = ({ children }) => {
                             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary-500 rounded-full"></span>
                         </button>
                         <div className="hidden md:flex items-center space-x-2 pl-2 border-l border-slate-100 ml-1">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-xs font-bold">
-                                {user?.name?.charAt(0).toUpperCase()}
-                            </div>
+                            {user?.photoURL ? (
+                                <img src={user.photoURL} alt={user.name} className="w-8 h-8 rounded-lg object-cover shadow-sm" />
+                            ) : (
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-xs font-bold">
+                                    {user?.name?.charAt(0).toUpperCase()}
+                                </div>
+                            )}
                             <div className="hidden lg:block">
                                 <p className="text-sm font-medium text-slate-700 leading-none">{user?.name}</p>
                                 <p className="text-[11px] text-slate-400">{user?.role || 'Admin'}</p>

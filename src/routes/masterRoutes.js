@@ -4,8 +4,24 @@ const {
     addLocation,
     getLocations,
     addFare,
-    getFareQuery
+    getFareQuery,
+    deleteLocation,
+    deleteFare,
 } = require('../controllers/masterController');
+const {
+    getPayModes,
+    addPayMode,
+    updatePayMode,
+    deletePayMode
+} = require('../controllers/payModeController');
+const {
+    createRoute,
+    getRoutes,
+    getRoute,
+    updateRoute,
+    deleteRoute,
+    calculateStopFares,
+} = require('../controllers/routeController');
 const { protect, checkPermission } = require('../middleware/authMiddleware');
 const identifyUser = require('../middleware/identifyUser');
 
@@ -53,6 +69,9 @@ router.route('/locations')
     .get(identifyUser, getLocations)
     .post(protect, checkPermission('manage_locations'), addLocation);
 
+router.route('/locations/:id')
+    .delete(protect, checkPermission('manage_locations'), deleteLocation);
+
 // Fares
 /**
  * @swagger
@@ -98,5 +117,72 @@ router.route('/locations')
 router.route('/fares')
     .get(identifyUser, getFareQuery)
     .post(protect, checkPermission('manage_locations'), addFare);
+
+router.route('/fares/:id')
+    .delete(protect, checkPermission('manage_locations'), deleteFare);
+
+// Pay Modes
+router.route('/pay-modes')
+    .get(protect, getPayModes)
+    .post(protect, checkPermission('manage_locations'), addPayMode);
+
+router.route('/pay-modes/:id')
+    .put(protect, checkPermission('manage_locations'), updatePayMode)
+    .delete(protect, checkPermission('manage_locations'), deletePayMode);
+
+// Routes
+/**
+ * @swagger
+ * /api/master/routes:
+ *   get:
+ *     summary: Get all routes
+ *     tags: [Master Data]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of routes with stops
+ *   post:
+ *     summary: Create a route (Admin)
+ *     tags: [Master Data]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [source, destination, baseFare]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               source:
+ *                 type: string
+ *               destination:
+ *                 type: string
+ *               stops:
+ *                 type: array
+ *               baseFare:
+ *                 type: number
+ *               totalDistance:
+ *                 type: number
+ *               estimatedDuration:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Route created
+ */
+router.route('/routes')
+    .get(protect, getRoutes)
+    .post(protect, checkPermission('manage_locations'), createRoute);
+
+router.route('/routes/calculate-fares')
+    .post(protect, calculateStopFares);
+
+router.route('/routes/:id')
+    .get(protect, getRoute)
+    .put(protect, checkPermission('manage_locations'), updateRoute)
+    .delete(protect, checkPermission('manage_locations'), deleteRoute);
 
 module.exports = router;

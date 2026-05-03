@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/theme/app_colors.dart';
+import '../core/widgets/shared_widgets.dart';
 import '../viewmodels/providers.dart';
 
 class HistoryTab extends ConsumerWidget {
@@ -11,10 +13,22 @@ class HistoryTab extends ConsumerWidget {
       ref.invalidate(ticketsProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Sync Complete!"),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white, size: 18),
+                SizedBox(width: 8),
+                Text(
+                  'Sync Complete!',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -22,9 +36,15 @@ class HistoryTab extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Sync Error: $e"),
-            backgroundColor: Colors.red,
+            content: Text(
+              "Sync Error: $e",
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -35,120 +55,183 @@ class HistoryTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ticketsAsync = ref.watch(ticketsProvider);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+    return DarkScreenScaffold(
       appBar: AppBar(
-        title: const Text('Recent Tickets'),
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'Recent Tickets',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.cloud_upload_rounded, color: Color(0xFFEA580C)),
+            icon: const Icon(
+              Icons.cloud_upload_rounded,
+              color: AppColors.gold,
+            ),
             tooltip: 'Sync Offline Tickets',
             onPressed: () => _syncTickets(context, ref),
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(ticketsProvider),
-        color: const Color(0xFFEA580C),
-        child: ticketsAsync.when(
-          data: (tickets) {
-            if (tickets.isEmpty) {
-              return _buildEmptyState();
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: tickets.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (ctx, i) {
-                final t = tickets[i];
-                final isOffline = t.ticketNumber.startsWith('OFF');
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async => ref.invalidate(ticketsProvider),
+          color: AppColors.gold,
+          child: ticketsAsync.when(
+            data: (tickets) {
+              if (tickets.isEmpty) {
+                return _buildEmptyState();
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: tickets.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (ctx, i) {
+                  final t = tickets[i];
+                  final isOffline = t.ticketNumber.startsWith('OFF');
 
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: isOffline ? Colors.orange.shade200 : Colors.transparent,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    leading: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isOffline ? Colors.orange.shade50 : const Color(0xFFF1F5F9), // Slate 100
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        isOffline ? Icons.cloud_off_rounded : Icons.receipt_long_rounded,
-                        color: isOffline ? const Color(0xFFEA580C) : const Color(0xFF64748B),
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isOffline
+                            ? AppColors.warning.withOpacity(0.3)
+                            : AppColors.border,
+                        width: 1,
                       ),
                     ),
-                    title: Text(
-                      t.ticketNumber,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A)),
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 6.0),
-                      child: Row(
-                        children: [
-                          Text(t.source, style: const TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.w500)),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 6),
-                            child: Icon(Icons.arrow_right_alt_rounded, size: 16, color: Color(0xFF94A3B8)),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      leading: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isOffline
+                              ? AppColors.warning.withOpacity(0.1)
+                              : AppColors.fieldBg,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isOffline
+                                ? AppColors.warning.withOpacity(0.2)
+                                : AppColors.border,
                           ),
-                          Text(t.destination, style: const TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.w500)),
+                        ),
+                        child: Icon(
+                          isOffline
+                              ? Icons.cloud_off_rounded
+                              : Icons.receipt_long_rounded,
+                          color: isOffline
+                              ? AppColors.warning
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      title: Text(
+                        t.ticketNumber,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Row(
+                          children: [
+                            Text(
+                              t.source,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 6),
+                              child: Icon(
+                                Icons.arrow_right_alt_rounded,
+                                size: 16,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            Text(
+                              t.destination,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '₹${t.totalAmount.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 20,
+                              color: AppColors.success,
+                            ),
+                          ),
+                          if (isOffline)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.warning.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: AppColors.warning.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Pending Sync',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.warning,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '₹${t.totalAmount.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 20,
-                            color: Color(0xFF16A34A), // Emerald 600
-                          ),
-                        ),
-                        if (isOffline)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.shade100,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text('Pending Sync', style: TextStyle(fontSize: 10, color: Color(0xFFC2410C), fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                      ],
-                    ),
+                  );
+                },
+              );
+            },
+            loading: () => const Center(
+              child: CircularProgressIndicator(color: AppColors.gold),
+            ),
+            error: (e, _) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline_rounded,
+                    size: 48,
+                    color: AppColors.error.withOpacity(0.6),
                   ),
-                );
-              },
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFFEA580C))),
-          error: (e, _) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline_rounded, size: 48, color: Colors.red.shade300),
-                const SizedBox(height: 16),
-                Text('Failed to load tickets\n$e', textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF64748B))),
-              ],
+                  const SizedBox(height: 16),
+                  Text(
+                    'Failed to load tickets\n$e',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -163,16 +246,31 @@ class HistoryTab extends ConsumerWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: AppColors.card,
               shape: BoxShape.circle,
+              border: Border.all(color: AppColors.border),
             ),
-            child: Icon(Icons.receipt_long_outlined, size: 64, color: Color(0xFFCBD5E1)),
+            child: Icon(
+              Icons.receipt_long_outlined,
+              size: 64,
+              color: AppColors.textSecondary.withOpacity(0.4),
+            ),
           ),
           const SizedBox(height: 24),
-          const Text('No tickets issued yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+          const Text(
+            'No tickets issued yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
           const SizedBox(height: 8),
-          const Text('Tickets you issue today will appear here', style: TextStyle(color: Color(0xFF64748B))),
+          const Text(
+            'Tickets you issue today will appear here',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
         ],
       ),
     );

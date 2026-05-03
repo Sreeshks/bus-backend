@@ -7,6 +7,7 @@ class Ticket {
   final int childCount;
   final double totalAmount;
   final String busId;
+  final String payMode;
   final String createdAt;
 
   Ticket({
@@ -18,6 +19,7 @@ class Ticket {
     required this.childCount,
     required this.totalAmount,
     required this.busId,
+    required this.payMode,
     required this.createdAt,
   });
 
@@ -35,7 +37,31 @@ class Ticket {
                 ? '${json['bus']['name']} (${json['bus']['busNumber']})'
                 : json['bus']['_id'] ?? '')
           : (json['bus'] ?? ''),
+      payMode: json['payMode'] ?? 'Cash',
       createdAt: json['createdAt'] ?? '',
+    );
+  }
+}
+
+class PayMode {
+  final String id;
+  final String name;
+  final String icon;
+  final String color;
+
+  PayMode({
+    required this.id,
+    required this.name,
+    required this.icon,
+    required this.color,
+  });
+
+  factory PayMode.fromJson(Map<String, dynamic> json) {
+    return PayMode(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+      icon: json['icon'] ?? 'payments',
+      color: json['color'] ?? '#D4952A',
     );
   }
 }

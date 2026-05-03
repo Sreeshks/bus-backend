@@ -32,6 +32,14 @@ const userSchema = mongoose.Schema({
     company: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User', // The Admin User who created this account/company
+    },
+    photoURL: {
+        type: String,
+    },
+    assignedBus: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Bus',
+        default: null,
     }
 }, {
     timestamps: true,

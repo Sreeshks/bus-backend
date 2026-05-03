@@ -31,6 +31,15 @@ class TicketRepository {
     }
   }
 
+  Future<List<PayMode>> getPayModes() async {
+    try {
+      final response = await _apiClient.client.get('/master/pay-modes');
+      return (response.data as List).map((e) => PayMode.fromJson(e)).toList();
+    } catch (e) {
+      return await getOfflinePayModes();
+    }
+  }
+
   Future<double> checkFare(String source, String destination) async {
     try {
       // Try online
@@ -51,7 +60,8 @@ class TicketRepository {
     required String destination,
     required int adultCount,
     required int childCount,
-    required double totalAmount, // Pass total from UI/Calculation
+    required double totalAmount,
+    required String payMode, // Pass total from UI/Calculation
   }) async {
     // Try online first
     try {
@@ -63,6 +73,7 @@ class TicketRepository {
           'destination': destination,
           'adultCount': adultCount,
           'childCount': childCount,
+          'payMode': payMode,
         },
       );
       return Ticket.fromJson(response.data);
@@ -75,6 +86,7 @@ class TicketRepository {
         adultCount,
         childCount,
         totalAmount,
+        payMode,
       );
     }
   }
@@ -134,6 +146,15 @@ class TicketRepository {
       print('Fare DL failed');
     }
 
+    // 4. Pay Modes
+    onProgress(90);
+    try {
+      final pmRes = await _apiClient.client.get('/master/pay-modes');
+      await prefs.setString('offline_pay_modes', jsonEncode(pmRes.data));
+    } catch (e) {
+      print('PayMode DL failed');
+    }
+
     onProgress(100);
   }
 
@@ -149,6 +170,13 @@ class TicketRepository {
     final String? str = prefs.getString('offline_buses');
     if (str == null) return [];
     return (jsonDecode(str) as List).map((e) => Bus.fromJson(e)).toList();
+  }
+
+  Future<List<PayMode>> getOfflinePayModes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? str = prefs.getString('offline_pay_modes');
+    if (str == null) return [];
+    return (jsonDecode(str) as List).map((e) => PayMode.fromJson(e)).toList();
   }
 
   Future<double> checkOfflineFare(String source, String destination) async {
@@ -173,6 +201,7 @@ class TicketRepository {
     int ac,
     int cc,
     double total,
+    String payMode,
   ) async {
     final prefs = await SharedPreferences.getInstance();
     final List<String> pending = prefs.getStringList('pending_tickets') ?? [];
@@ -184,6 +213,7 @@ class TicketRepository {
       'adultCount': ac,
       'childCount': cc,
       'totalAmount': total,
+      'payMode': payMode,
       // For local display only
       'ticketNumber':
           'OFF-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}', // Temp ID
@@ -225,6 +255,7 @@ class TicketRepository {
             'destination': data['destination'],
             'adultCount': data['adultCount'],
             'childCount': data['childCount'],
+            'payMode': data['payMode'] ?? 'Cash',
           },
         );
       } catch (e) {

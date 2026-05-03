@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { Plus, User, Shield, Key, Edit2, Mail, X } from 'lucide-react';
+import { Plus, User, Shield, Key, Edit2, Mail, X, Bus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const Users = () => {
     const [users, setUsers] = useState([]);
+    const [buses, setBuses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({
-        name: '', email: '', password: '', role: 'Conductor', permissions: []
+        name: '', email: '', password: '', role: 'Conductor', permissions: [], assignedBus: ''
     });
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
@@ -43,8 +44,18 @@ const Users = () => {
         }
     };
 
+    const fetchBuses = async () => {
+        try {
+            const { data } = await api.get('/buses');
+            setBuses(data);
+        } catch (error) {
+            console.error('Failed to load buses:', error);
+        }
+    };
+
     useEffect(() => {
         fetchUsers();
+        fetchBuses();
     }, []);
 
     const handleSubmit = async (e) => {
@@ -52,7 +63,8 @@ const Users = () => {
         try {
             const payload = {
                 ...formData,
-                permissions: getPermissionsForRole(formData.role)
+                permissions: getPermissionsForRole(formData.role),
+                assignedBus: formData.assignedBus || null,
             };
 
             if (isEditing) {
@@ -77,7 +89,8 @@ const Users = () => {
             email: user.email,
             password: '',
             role: user.role,
-            permissions: user.permissions
+            permissions: user.permissions,
+            assignedBus: user.assignedBus?._id || ''
         });
         setEditId(user._id);
         setIsEditing(true);
@@ -85,7 +98,7 @@ const Users = () => {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', email: '', password: '', role: 'Conductor', permissions: [] });
+        setFormData({ name: '', email: '', password: '', role: 'Conductor', permissions: [], assignedBus: '' });
         setIsEditing(false);
         setEditId(null);
     };
@@ -95,7 +108,7 @@ const Users = () => {
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
                 <div>
                     <h2 className="text-xl font-bold text-slate-900">User Management</h2>
-                    <p className="text-sm text-slate-500 mt-0.5">Manage team members and permissions</p>
+                    <p className="text-sm text-slate-500 mt-0.5">Manage team members, permissions & bus assignments</p>
                 </div>
                 <button
                     onClick={() => { resetForm(); setShowModal(true); }}
@@ -161,7 +174,7 @@ const Users = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-wrap gap-1.5 mb-4">
+                                <div className="flex flex-wrap gap-1.5 mb-3">
                                     <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${colors.bg} ${colors.text} ${colors.border}`}>
                                         {user.role}
                                     </span>
@@ -169,6 +182,23 @@ const Users = () => {
                                         <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-red-50 text-red-700 border border-red-100">
                                             Super Admin
                                         </span>
+                                    )}
+                                </div>
+
+                                {/* Assigned Bus Badge */}
+                                <div className="mb-4">
+                                    {user.assignedBus ? (
+                                        <div className="flex items-center space-x-2 px-2.5 py-1.5 bg-amber-50 border border-amber-100 rounded-lg">
+                                            <Bus size={13} className="text-amber-600 flex-shrink-0" />
+                                            <span className="text-[11px] font-semibold text-amber-700 truncate">
+                                                {user.assignedBus.name} ({user.assignedBus.busNumber})
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center space-x-2 px-2.5 py-1.5 bg-slate-50 border border-slate-100 rounded-lg">
+                                            <Bus size={13} className="text-slate-300 flex-shrink-0" />
+                                            <span className="text-[11px] text-slate-400 italic">No bus assigned</span>
+                                        </div>
                                     )}
                                 </div>
 
@@ -200,13 +230,13 @@ const Users = () => {
                             <div className="bg-gradient-to-r from-primary-600 to-primary-500 p-5 flex justify-between items-center">
                                 <div>
                                     <h3 className="text-base font-bold text-white">{isEditing ? 'Edit User' : 'Create New User'}</h3>
-                                    <p className="text-xs text-white/70 mt-0.5">{isEditing ? 'Update user details' : 'Add a new team member'}</p>
+                                    <p className="text-xs text-white/70 mt-0.5">{isEditing ? 'Update user details & bus assignment' : 'Add a new team member with bus assignment'}</p>
                                 </div>
                                 <button onClick={() => setShowModal(false)} className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                                     <X size={18} />
                                 </button>
                             </div>
-                            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+                            <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
                                     <div className="relative">
@@ -264,6 +294,29 @@ const Users = () => {
                                     </div>
                                     <p className="text-[11px] text-slate-400 mt-1.5">
                                         Role <b className="text-slate-500">{formData.role}</b> grants relevant permissions automatically.
+                                    </p>
+                                </div>
+
+                                {/* Assigned Bus Dropdown */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Assigned Bus</label>
+                                    <div className="relative">
+                                        <Bus size={15} className="absolute left-3.5 top-3 text-slate-400" />
+                                        <select
+                                            value={formData.assignedBus}
+                                            onChange={(e) => setFormData({ ...formData, assignedBus: e.target.value })}
+                                            className="w-full pl-10 pr-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-[3px] focus:ring-primary-100 focus:border-primary-400 transition-all text-sm bg-white appearance-none"
+                                        >
+                                            <option value="">— No Bus Assigned —</option>
+                                            {buses.map(bus => (
+                                                <option key={bus._id} value={bus._id}>
+                                                    {bus.name} ({bus.busNumber})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 mt-1.5">
+                                        The bus this user will operate in the mobile terminal app.
                                     </p>
                                 </div>
 

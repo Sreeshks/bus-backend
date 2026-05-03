@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/theme/app_colors.dart';
+import '../core/widgets/shared_widgets.dart';
 import '../viewmodels/providers.dart';
 import 'main_layout.dart';
 
@@ -10,9 +12,38 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailCtrl = TextEditingController(text: 'admin@yatra.com');
-  final _passCtrl = TextEditingController(text: 'password123');
+class _LoginScreenState extends ConsumerState<LoginScreen>
+    with SingleTickerProviderStateMixin {
+  final _emailCtrl = TextEditingController(text: '');
+  final _passCtrl = TextEditingController(text: '');
+  bool _obscurePass = true;
+
+  late final AnimationController _animCtrl;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
+    _animCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
 
   void _handleLogin() async {
     final success = await ref
@@ -20,17 +51,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         .login(_emailCtrl.text.trim(), _passCtrl.text.trim());
 
     if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainLayout())
-      );
+      // No manual navigation needed! AuthWrapper in main.dart
+      // will automatically switch to MainLayout when user is not null.
     } else {
       final error = ref.read(authProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error ?? 'Login Failed'),
-          backgroundColor: Colors.red.shade600,
+          content: Row(
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                error ?? 'Login Failed',
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.errorDark,
           behavior: SnackBarBehavior.floating,
-        )
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
+        ),
       );
     }
   }
@@ -39,169 +86,175 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(authProvider);
 
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFFF7ED), Color(0xFFFFEDD5)], // Orange-50 to Orange-100
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
+    return DarkScreenScaffold(
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnim,
+          child: SlideTransition(
+            position: _slideAnim,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Logo
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFF97316), Color(0xFFEA580C)], // Orange-500 to Orange-600
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                  const SizedBox(height: 24),
+
+                  // ── branding header ───────────────────────
+                  Row(
+                    children: [
+                      const LogoMark(),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'ente yatra',
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.8,
+                              height: 1,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.goldLight,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'CONDUCTOR TERMINAL',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.gold,
+                                  letterSpacing: 2.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFEA580C).withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.directions_bus_filled_rounded,
-                      size: 48,
-                      color: Colors.white,
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 32),
+
+                  const SizedBox(height: 52),
+
+                  // ── section label ─────────────────────────
                   const Text(
-                    'Ente Yatra',
+                    'Sign in',
                     style: TextStyle(
                       fontSize: 32,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF1E293B), // Slate-800
-                      letterSpacing: -0.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -1.0,
+                      height: 1,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   const Text(
-                    'Conductor Terminal',
+                    'Access your conductor dashboard',
                     style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF64748B), // Slate-500
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.1,
                     ),
                   ),
-                  const SizedBox(height: 48),
 
-                  // Login Form Card
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 24,
-                          offset: const Offset(0, 12),
+                  const SizedBox(height: 40),
+
+                  // ── form card ─────────────────────────────
+                  ThemedCard(
+                    child: Column(
+                      children: [
+                        const FieldLabel(label: 'Employee Email'),
+                        const SizedBox(height: 8),
+                        DarkTextField(
+                          controller: _emailCtrl,
+                          hint: 'you@krtc.in',
+                          keyboardType: TextInputType.emailAddress,
+                          prefixIcon: Icons.badge_outlined,
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        const FieldLabel(label: 'PIN / Password'),
+                        const SizedBox(height: 8),
+                        DarkTextField(
+                          controller: _passCtrl,
+                          hint: '••••••••',
+                          obscureText: _obscurePass,
+                          prefixIcon: Icons.lock_outline_rounded,
+                          suffix: GestureDetector(
+                            onTap: () =>
+                                setState(() => _obscurePass = !_obscurePass),
+                            child: Icon(
+                              _obscurePass
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              size: 18,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 28),
+
+                        // ── login button ──────────────────────
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: state.isLoading
+                              ? const LoadingButton()
+                              : GoldButton(
+                                  onTap: _handleLogin,
+                                  label: 'Access Terminal',
+                                  icon: Icons.arrow_forward_rounded,
+                                ),
                         ),
                       ],
                     ),
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // ── footer ────────────────────────────────
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Sign In',
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppColors.textSecondary.withOpacity(0.4),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Kerala Road Transport Corp.',
                           style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A), // Slate-900
+                            fontSize: 12,
+                            color: AppColors.textSecondary.withOpacity(0.5),
+                            letterSpacing: 0.3,
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        TextField(
-                          controller: _emailCtrl,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: InputDecoration(
-                            labelText: 'Employee Email',
-                            prefixIcon: const Icon(Icons.badge_outlined, color: Color(0xFF94A3B8)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(color: Color(0xFFEA580C), width: 2),
-                            ),
-                            filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _passCtrl,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            labelText: 'PIN / Password',
-                            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF94A3B8)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(color: Color(0xFFEA580C), width: 2),
-                            ),
-                            filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: state.isLoading ? null : _handleLogin,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFEA580C),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 4,
-                              shadowColor: const Color(0xFFEA580C).withOpacity(0.5),
-                            ),
-                            child: state.isLoading
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-                                  )
-                                : const Text(
-                                    'Access Terminal',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppColors.textSecondary.withOpacity(0.4),
+                            shape: BoxShape.circle,
                           ),
                         ),
                       ],

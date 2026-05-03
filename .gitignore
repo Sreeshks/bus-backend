@@ -1,3 +1,12 @@
-/.env
-/.admin-dashboard/src/api/axios.js
-admin-dashboard/src/api/axios.js
+node_modules/
+.env
+admin-dashboard/.env
+admin-dashboard/node_modules/
+admin-dashboard/dist/
+busapp/.env
+busapp/.flutter-plugins
+busapp/.flutter-plugins-dependencies
+busapp/.dart_tool/
+busapp/build/
+.DS_Store
+*.log

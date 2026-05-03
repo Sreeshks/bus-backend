@@ -25,4 +25,8 @@ class AuthRepository {
       throw 'An unexpected error occurred';
     }
   }
+
+  Future<void> logout() async {
+    await _apiClient.clearToken();
+  }
 }

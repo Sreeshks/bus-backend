@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authUser, registerUser, createUser, getUsers, updateUserRights, updateProfile } = require('../controllers/authController');
+const { authUser, registerUser, createUser, getUsers, updateUserRights, updateProfile, googleLogin } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 /**
@@ -12,6 +12,7 @@ const { protect, admin } = require('../middleware/authMiddleware');
 
 router.post('/register', registerUser);
 router.post('/login', authUser);
+router.post('/google', googleLogin);
 
 /**
  * @swagger

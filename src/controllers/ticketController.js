@@ -6,7 +6,7 @@ const crypto = require('crypto');
 // @route   POST /api/tickets
 // @access  Private (Conductor/Admin)
 const issueTicket = async (req, res) => {
-    const { busId, tripId, source, destination, adultCount, childCount } = req.body;
+    const { busId, tripId, source, destination, adultCount, childCount, payMode } = req.body;
 
     // 1. Get Fare
     let farePerAdult = 0;
@@ -19,8 +19,6 @@ const issueTicket = async (req, res) => {
     }
 
     if (!fareObj) {
-        // Fallback or Error? 
-        // For now, require fare to be set.
         res.status(400);
         throw new Error(`Fare not found for ${source} to ${destination}`);
     }
@@ -45,9 +43,8 @@ const issueTicket = async (req, res) => {
         farePerAdult,
         farePerChild,
         totalAmount: totalFare,
-        farePerChild,
-        totalAmount: totalFare,
         ticketNumber,
+        payMode: payMode || 'Cash',
         company: req.user.company
     });
 
@@ -58,11 +55,6 @@ const issueTicket = async (req, res) => {
 // @route   GET /api/tickets
 // @access  Private
 const getTickets = async (req, res) => {
-    // Show tickets for this company (Admin view all, Conductor view own?? For now admin view all is better for dashboard)
-    // The route in Tickets.jsx is generic /tickets.
-    // Dashboard Tickets.jsx shows RECENT tickets.
-    // If Admin: show all company tickets. If conductor: show own.
-
     let query = { company: req.user.company };
     if (req.user.role === 'Conductor') {
         query.conductor = req.user._id;
@@ -92,6 +84,7 @@ const getDailyBill = async (req, res) => {
             match.conductor = req.user._id;
         }
 
+        // Overall stats
         const stats = await Ticket.aggregate([
             { $match: match },
             {
@@ -105,11 +98,31 @@ const getDailyBill = async (req, res) => {
             }
         ]);
 
-        if (stats.length > 0) {
-            res.json(stats[0]);
-        } else {
-            res.json({ totalAmount: 0, ticketsCount: 0, adultsCount: 0, childrenCount: 0 });
-        }
+        // Pay mode breakdown
+        const payModeBreakdown = await Ticket.aggregate([
+            { $match: match },
+            {
+                $group: {
+                    _id: "$payMode",
+                    amount: { $sum: "$totalAmount" },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { amount: -1 } }
+        ]);
+
+        const result = stats.length > 0
+            ? stats[0]
+            : { totalAmount: 0, ticketsCount: 0, adultsCount: 0, childrenCount: 0 };
+
+        // Format paymode breakdown as a clean object
+        result.payModeBreakdown = payModeBreakdown.map(pm => ({
+            mode: pm._id || 'Cash',
+            amount: pm.amount,
+            count: pm.count,
+        }));
+
+        res.json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
