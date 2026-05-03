@@ -73,7 +73,7 @@ const RouteBuilder = ({ locations, onSaved }) => {
         } finally { setSaving(false); }
     };
 
-    const locOptions = locations.map(l => ({ label: l.name, value: l.name }));
+    const locOptions = locations.map(l => ({ label: `${l.name} (${l.code})`, value: l.name }));
 
     return (
         <form onSubmit={handleSave} className="space-y-5">

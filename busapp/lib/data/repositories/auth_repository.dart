@@ -8,6 +8,26 @@ class AuthRepository {
 
   AuthRepository(this._apiClient);
 
+  Future<User> register(String name, String email, String password) async {
+    try {
+      final response = await _apiClient.client.post(
+        '/auth/register',
+        data: {'name': name, 'email': email, 'password': password},
+      );
+
+      final user = User.fromJson(response.data);
+      if (user.token != null) {
+        await _apiClient.setToken(user.token!);
+        await _apiClient.saveUserData(jsonEncode(response.data));
+      }
+      return user;
+    } on DioException catch (e) {
+      throw e.response?.data['message'] ?? 'Registration failed';
+    } catch (e) {
+      throw 'An unexpected error occurred';
+    }
+  }
+
   Future<User> login(String email, String password) async {
     try {
       final response = await _apiClient.client.post(

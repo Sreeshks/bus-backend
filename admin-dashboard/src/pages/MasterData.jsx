@@ -310,14 +310,14 @@ const MasterData = () => {
                                 <form onSubmit={handleAddFare} className="space-y-3">
                                     <div className="relative z-20">
                                         <SearchableSelect label="Source"
-                                            options={locations.map(l => ({ label: l.name, value: l.name }))}
+                                            options={locations.map(l => ({ label: `${l.name} (${l.code})`, value: l.name }))}
                                             value={fareForm.source}
                                             onChange={(val) => setFareForm({ ...fareForm, source: val })}
                                             placeholder="From" icon={MapPin} />
                                     </div>
                                     <div className="relative z-10">
                                         <SearchableSelect label="Destination"
-                                            options={locations.map(l => ({ label: l.name, value: l.name }))}
+                                            options={locations.map(l => ({ label: `${l.name} (${l.code})`, value: l.name }))}
                                             value={fareForm.destination}
                                             onChange={(val) => setFareForm({ ...fareForm, destination: val })}
                                             placeholder="To" icon={MapPin} />

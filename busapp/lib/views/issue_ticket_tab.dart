@@ -45,7 +45,7 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
     super.dispose();
   }
 
-  // ── fare logic ──────────────────────────────────────────────────────────────
+  // ── Fare logic ─────────────────────────────────────────────────────────────
 
   void _checkFare() async {
     if (selectedSource != null && selectedDestination != null) {
@@ -54,13 +54,11 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
         _fareAnimController.forward(from: 0);
         return;
       }
-
       setState(() => loadingFare = true);
       try {
         final farePerAdult = await ref
             .read(ticketRepositoryProvider)
             .checkFare(selectedSource!, selectedDestination!);
-
         if (mounted) {
           final farePerChild = farePerAdult / 2;
           final total =
@@ -100,7 +98,6 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
             totalAmount: estimatedFare!,
             payMode: selectedPayMode,
           );
-
       if (mounted) {
         _showSnack(
           'Ticket Printed Successfully!',
@@ -108,10 +105,8 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
           Icons.check_circle_rounded,
         );
       }
-
       ref.invalidate(ticketsProvider);
       ref.invalidate(dailyBillProvider);
-
       setState(() {
         adultCount = 1;
         childCount = 0;
@@ -121,9 +116,8 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
       _fareAnimController.reverse();
       _checkFare();
     } catch (e) {
-      if (mounted) {
+      if (mounted)
         _showSnack(e.toString(), AppColors.error, Icons.error_rounded);
-      }
     } finally {
       if (mounted) setState(() => issuing = false);
     }
@@ -164,7 +158,7 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
     }
   }
 
-  // ── build ───────────────────────────────────────────────────────────────────
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -187,28 +181,24 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Route Card ──────────────────────────────────────
                 _buildSectionLabel('ROUTE', Icons.route_rounded),
                 const SizedBox(height: 8),
                 _buildRouteCard(locationsAsync),
 
                 const SizedBox(height: 16),
 
-                // ── Passengers ──────────────────────────────────────
                 _buildSectionLabel('PASSENGERS', Icons.people_alt_rounded),
                 const SizedBox(height: 8),
                 _buildPassengerCard(),
 
                 const SizedBox(height: 16),
 
-                // ── Payment ─────────────────────────────────────────
                 _buildSectionLabel('PAYMENT', Icons.payment_rounded),
                 const SizedBox(height: 8),
                 _buildPaymentCard(),
 
                 const SizedBox(height: 20),
 
-                // ── Fare + Button ────────────────────────────────────
                 _buildFareAndAction(user, hasAssignment),
               ],
             ),
@@ -218,13 +208,14 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
     );
   }
 
+  // ── AppBar ─────────────────────────────────────────────────────────────────
+
   PreferredSizeWidget _buildAppBar(dynamic user, bool hasAssignment) {
     return AppBar(
       backgroundColor: AppColors.surface,
       titleSpacing: 16,
       title: Row(
         children: [
-          // App icon accent
           Container(
             width: 36,
             height: 36,
@@ -318,6 +309,8 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
     );
   }
 
+  // ── Section label ──────────────────────────────────────────────────────────
+
   Widget _buildSectionLabel(String label, IconData icon) {
     return Row(
       children: [
@@ -346,72 +339,70 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
         border: Border.all(color: AppColors.border),
       ),
       child: locationsAsync.when(
-        data: (locs) => Column(
-          children: [
-            // From
-            _buildCompactDropdown(
-              value: selectedSource,
-              label: 'From',
-              icon: Icons.trip_origin_rounded,
-              iconColor: AppColors.info,
-              items: locs,
-              onChanged: (v) {
-                setState(() => selectedSource = v);
-                _onSelectionChanged();
-              },
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(18),
+        data: (locs) {
+          final List<Location> items = locs as List<Location>;
+          return Column(
+            children: [
+              _buildSearchableSelector(
+                value: selectedSource,
+                label: 'From',
+                icon: Icons.trip_origin_rounded,
+                iconColor: AppColors.info,
+                items: items,
+                onChanged: (v) {
+                  setState(() => selectedSource = v);
+                  _onSelectionChanged();
+                },
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(18),
+                ),
               ),
-            ),
-
-            // Divider with swap
-            Container(
-              height: 1,
-              color: AppColors.border,
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  Positioned(
-                    child: GestureDetector(
-                      onTap: _swapLocations,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AppColors.fieldBg,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: const Icon(
-                          Icons.swap_vert_rounded,
-                          color: AppColors.textSecondary,
-                          size: 16,
+              Container(
+                height: 1,
+                color: AppColors.border,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    Positioned(
+                      child: GestureDetector(
+                        onTap: _swapLocations,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.fieldBg,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: const Icon(
+                            Icons.swap_vert_rounded,
+                            color: AppColors.textSecondary,
+                            size: 16,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-
-            // To
-            _buildCompactDropdown(
-              value: selectedDestination,
-              label: 'To',
-              icon: Icons.location_on_rounded,
-              iconColor: AppColors.error,
-              items: locs,
-              onChanged: (v) {
-                setState(() => selectedDestination = v);
-                _onSelectionChanged();
-              },
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(18),
+              _buildSearchableSelector(
+                value: selectedDestination,
+                label: 'To',
+                icon: Icons.location_on_rounded,
+                iconColor: AppColors.error,
+                items: items,
+                onChanged: (v) {
+                  setState(() => selectedDestination = v);
+                  _onSelectionChanged();
+                },
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(18),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        },
         loading: () => const Padding(
           padding: EdgeInsets.all(24),
           child: Center(
@@ -432,65 +423,217 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
     );
   }
 
-  Widget _buildCompactDropdown({
+  Widget _buildSearchableSelector({
     required String? value,
     required String label,
     required IconData icon,
     required Color iconColor,
-    required List items,
+    required List<Location> items,
     required ValueChanged<String?> onChanged,
     required BorderRadius borderRadius,
   }) {
-    return ClipRRect(
-      borderRadius: borderRadius,
-      child: DropdownButtonFormField<String>(
-        value: value,
-        dropdownColor: AppColors.card,
-        isExpanded: true,
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-          ),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 14, right: 8),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 0,
-            minHeight: 0,
-          ),
-          filled: true,
-          fillColor: AppColors.fieldBg,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 14,
-          ),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-        ),
-        items: items
-            .map<DropdownMenuItem<String>>(
-              (l) => DropdownMenuItem<String>(
-                value: l.name as String,
-                child: Text(
-                  l.name as String,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
-                  ),
+    String displayValue = 'Select Location';
+    if (value != null) {
+      try {
+        final loc = items.firstWhere((l) => l.name == value);
+        displayValue = '${loc.name} (${loc.code})';
+      } catch (_) {
+        displayValue = value;
+      }
+    }
+
+    return InkWell(
+      onTap: () => _showLocationSearch(label, items, onChanged),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: const BoxDecoration(color: AppColors.fieldBg),
+          child: Row(
+            children: [
+              Icon(icon, color: iconColor, size: 18),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      displayValue,
+                      style: TextStyle(
+                        color: value != null
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary.withValues(alpha: 0.5),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-            )
-            .toList(),
-        onChanged: onChanged,
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: AppColors.textSecondary,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLocationSearch(
+    String title,
+    List<Location> items,
+    ValueChanged<String?> onSelected,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final TextEditingController searchCtrl = TextEditingController();
+          List<Location> filtered = items;
+
+          return DraggableScrollableSheet(
+            initialChildSize: 0.8,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (_, scrollController) => Container(
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.border,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+                    child: TextField(
+                      controller: searchCtrl,
+                      autofocus: true,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        hintText: 'Search station or code...',
+                        hintStyle: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: AppColors.gold,
+                          size: 20,
+                        ),
+                        suffixIcon: searchCtrl.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  searchCtrl.clear();
+                                  setModalState(() => filtered = items);
+                                },
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: AppColors.fieldBg,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                      ),
+                      onChanged: (q) {
+                        setModalState(() {
+                          filtered = items
+                              .where(
+                                (l) =>
+                                    l.name.toLowerCase().contains(
+                                      q.toLowerCase(),
+                                    ) ||
+                                    l.code.toLowerCase().contains(
+                                      q.toLowerCase(),
+                                    ),
+                              )
+                              .toList();
+                        });
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No locations found',
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                          )
+                        : ListView.separated(
+                            controller: scrollController,
+                            padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, __) => Divider(
+                              color: AppColors.border.withValues(alpha: 0.5),
+                              height: 1,
+                            ),
+                            itemBuilder: (context, index) {
+                              final loc = filtered[index];
+                              return ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                                title: Text(
+                                  loc.name,
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  loc.code,
+                                  style: const TextStyle(
+                                    color: AppColors.gold,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                trailing: const Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: AppColors.textSecondary,
+                                  size: 18,
+                                ),
+                                onTap: () {
+                                  onSelected(loc.name);
+                                  Navigator.pop(context);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -666,7 +809,6 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
                 children: displayModes.map((mode) {
                   final isSelected = selectedPayMode == mode.name;
                   final modeColor = _parseColor(mode.color);
-
                   return GestureDetector(
                     onTap: () => setState(() => selectedPayMode = mode.name),
                     child: AnimatedContainer(
@@ -740,7 +882,6 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
 
     return Column(
       children: [
-        // Fare display
         if (loadingFare)
           Container(
             height: 52,
@@ -817,7 +958,6 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
 
         const SizedBox(height: 14),
 
-        // Issue button
         SizedBox(
           height: 54,
           child: issuing
@@ -857,7 +997,7 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
     );
   }
 
-  // ── helpers ────────────────────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   Color _parseColor(String hex) {
     try {
@@ -927,7 +1067,7 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      (m['name'] as String),
+                      m['name'] as String,
                       style: TextStyle(
                         color: isSelected
                             ? AppColors.textPrimary
@@ -948,7 +1088,7 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
     );
   }
 
-  // ── download dialog ────────────────────────────────────────────────────────
+  // ── Download dialog ────────────────────────────────────────────────────────
 
   void _downloadData() {
     showDialog(
