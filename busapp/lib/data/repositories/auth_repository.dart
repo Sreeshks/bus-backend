@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../core/api_client.dart';
 import '../models/user_model.dart';
@@ -17,6 +18,7 @@ class AuthRepository {
       final user = User.fromJson(response.data);
       if (user.token != null) {
         await _apiClient.setToken(user.token!);
+        await _apiClient.saveUserData(jsonEncode(response.data));
       }
       return user;
     } on DioException catch (e) {
@@ -24,6 +26,18 @@ class AuthRepository {
     } catch (e) {
       throw 'An unexpected error occurred';
     }
+  }
+
+  Future<User?> getSavedUser() async {
+    final data = await _apiClient.getUserData();
+    if (data != null) {
+      try {
+        return User.fromJson(jsonDecode(data));
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
   }
 
   Future<void> logout() async {

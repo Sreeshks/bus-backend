@@ -29,7 +29,16 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repo;
 
-  AuthNotifier(this._repo) : super(AuthState());
+  AuthNotifier(this._repo) : super(AuthState()) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    final user = await _repo.getSavedUser();
+    if (user != null) {
+      state = AuthState(user: user);
+    }
+  }
 
   Future<bool> login(String email, String password) async {
     state = AuthState(isLoading: true);

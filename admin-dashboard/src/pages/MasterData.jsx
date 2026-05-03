@@ -36,6 +36,15 @@ const MasterData = () => {
         }
     };
 
+    const fetchRoutes = async () => {
+        try {
+            const res = await api.get('/master/routes');
+            setRoutes(res.data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     const fetchPayModes = async () => {
         try {
             const res = await api.get('/master/pay-modes');

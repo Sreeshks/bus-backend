@@ -48,6 +48,16 @@ class ApiClient {
     await prefs.setString('auth_token', token);
   }
 
+  Future<void> saveUserData(String data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_data', data);
+  }
+
+  Future<String?> getUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_data');
+  }
+
   Future<void> clearToken() async {
     _token = null;
     final prefs = await SharedPreferences.getInstance();
