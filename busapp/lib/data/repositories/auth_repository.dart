@@ -60,6 +60,24 @@ class AuthRepository {
     return null;
   }
 
+  Future<List<User>> getUsers() async {
+    try {
+      final response = await _apiClient.client.get('/auth/users');
+      return (response.data as List).map((u) => User.fromJson(u)).toList();
+    } on DioException catch (e) {
+      throw e.response?.data['message'] ?? 'Failed to fetch users';
+    }
+  }
+
+  Future<User> createUser(Map<String, dynamic> userData) async {
+    try {
+      final response = await _apiClient.client.post('/auth/users', data: userData);
+      return User.fromJson(response.data);
+    } on DioException catch (e) {
+      throw e.response?.data['message'] ?? 'Failed to create user';
+    }
+  }
+
   Future<void> logout() async {
     await _apiClient.clearToken();
   }

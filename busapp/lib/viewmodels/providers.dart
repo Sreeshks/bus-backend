@@ -40,6 +40,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<bool> register(String name, String email, String password) async {
+    state = AuthState(isLoading: true);
+    try {
+      final user = await _repo.register(name, email, password);
+      state = AuthState(user: user);
+      return true;
+    } catch (e) {
+      state = AuthState(error: e.toString());
+      return false;
+    }
+  }
+
   Future<bool> login(String email, String password) async {
     state = AuthState(isLoading: true);
     try {
@@ -84,4 +96,28 @@ final dailyBillProvider = FutureProvider<Map<String, dynamic>>((ref) async {
 
 final payModesProvider = FutureProvider<List<PayMode>>((ref) async {
   return ref.read(ticketRepositoryProvider).getPayModes();
+});
+
+final usersProvider = FutureProvider<List<User>>((ref) async {
+  return ref.read(authRepositoryProvider).getUsers();
+});
+
+final faresProvider = FutureProvider<List<Fare>>((ref) async {
+  return ref.read(ticketRepositoryProvider).getFares();
+});
+
+final routesProvider = FutureProvider<List<BusRoute>>((ref) async {
+  return ref.read(ticketRepositoryProvider).getRoutes();
+});
+
+final dashboardStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  return ref.read(ticketRepositoryProvider).getDashboardStats();
+});
+
+final tripsProvider = FutureProvider<List<Trip>>((ref) async {
+  return ref.read(ticketRepositoryProvider).getTrips();
+});
+
+final allTicketsProvider = FutureProvider<List<Ticket>>((ref) async {
+  return ref.read(ticketRepositoryProvider).getAllTickets();
 });

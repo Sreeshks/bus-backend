@@ -59,6 +59,9 @@ class User {
     };
   }
 
+  /// Whether this user has admin privileges
+  bool get isAdmin => role == 'Admin';
+
   /// Whether this user has a bus assigned to them
   bool get hasBusAssigned => assignedBusId != null && assignedBusId!.isNotEmpty;
 

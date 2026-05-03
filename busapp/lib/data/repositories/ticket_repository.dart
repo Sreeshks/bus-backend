@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/api_client.dart';
 import '../models/ticket_model.dart';
@@ -31,6 +32,18 @@ class TicketRepository {
     }
   }
 
+  Future<Bus> createBus(String name, String busNumber) async {
+    try {
+      final response = await _apiClient.client.post('/buses', data: {
+        'name': name,
+        'busNumber': busNumber,
+      });
+      return Bus.fromJson(response.data);
+    } on DioException catch (e) {
+      throw e.response?.data['message'] ?? 'Failed to create bus';
+    }
+  }
+
   Future<List<PayMode>> getPayModes() async {
     try {
       final response = await _apiClient.client.get('/master/pay-modes');
@@ -52,6 +65,81 @@ class TicketRepository {
       // Fallback to offline calculation
       return await checkOfflineFare(source, destination);
     }
+  }
+
+  // --- ADMIN MASTER DATA METHODS ---
+
+  Future<void> addLocation(String name, String code) async {
+    await _apiClient.client.post('/master/locations', data: {'name': name, 'code': code});
+  }
+
+  Future<void> deleteLocation(String id) async {
+    await _apiClient.client.delete('/master/locations/$id');
+  }
+
+  Future<List<Fare>> getFares() async {
+    final res = await _apiClient.client.get('/master/fares');
+    return (res.data as List).map((e) => Fare.fromJson(e)).toList();
+  }
+
+  Future<void> updateFare(String source, String destination, double amount) async {
+    await _apiClient.client.post('/master/fares', data: {
+      'source': source,
+      'destination': destination,
+      'amount': amount,
+    });
+  }
+
+  Future<void> deleteFare(String id) async {
+    await _apiClient.client.delete('/master/fares/$id');
+  }
+
+  Future<List<BusRoute>> getRoutes() async {
+    final res = await _apiClient.client.get('/master/routes');
+    return (res.data as List).map((e) => BusRoute.fromJson(e)).toList();
+  }
+
+  Future<void> createRoute(String name, List<String> stops, String? description) async {
+    await _apiClient.client.post('/master/routes', data: {
+      'name': name,
+      'stops': stops,
+      'description': description,
+    });
+  }
+
+  Future<void> deleteRoute(String id) async {
+    await _apiClient.client.delete('/master/routes/$id');
+  }
+
+  Future<void> addPayMode(String name, String icon, String color, int sortOrder) async {
+    await _apiClient.client.post('/master/pay-modes', data: {
+      'name': name,
+      'icon': icon,
+      'color': color,
+      'sortOrder': sortOrder,
+    });
+  }
+
+  Future<void> deletePayMode(String id) async {
+    await _apiClient.client.delete('/master/pay-modes/$id');
+  }
+
+  Future<List<Trip>> getTrips() async {
+    final res = await _apiClient.client.get('/trips');
+    return (res.data as List).map((e) => Trip.fromJson(e)).toList();
+  }
+
+  Future<void> createTrip(Map<String, dynamic> tripData) async {
+    await _apiClient.client.post('/trips', data: tripData);
+  }
+
+  Future<void> deleteTrip(String id) async {
+    await _apiClient.client.delete('/trips/$id');
+  }
+
+  Future<List<Ticket>> getAllTickets() async {
+    final res = await _apiClient.client.get('/tickets/all');
+    return (res.data as List).map((e) => Ticket.fromJson(e)).toList();
   }
 
   Future<Ticket> issueTicket({
@@ -106,6 +194,15 @@ class TicketRepository {
       return response.data as Map<String, dynamic>;
     } catch (e) {
       return {'totalAmount': 0, 'ticketsCount': 0, 'adultsCount': 0, 'childrenCount': 0};
+    }
+  }
+
+  Future<Map<String, dynamic>> getDashboardStats() async {
+    try {
+      final response = await _apiClient.client.get('/reports/dashboard');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw 'Failed to load report stats';
     }
   }
 

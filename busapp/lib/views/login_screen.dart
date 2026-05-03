@@ -4,6 +4,7 @@ import '../core/theme/app_colors.dart';
 import '../core/widgets/shared_widgets.dart';
 import '../viewmodels/providers.dart';
 import 'main_layout.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -221,6 +222,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 ),
                         ),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  Center(
+                    child: GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const RegisterScreen()),
+                      ),
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                          children: [
+                            const TextSpan(text: "Don't have an account? "),
+                            TextSpan(
+                              text: 'Sign Up',
+                              style: TextStyle(
+                                color: AppColors.goldLight,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                                decorationColor:
+                                    AppColors.goldLight.withOpacity(0.4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
 

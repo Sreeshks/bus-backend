@@ -97,3 +97,84 @@ class Location {
     );
   }
 }
+
+class BusRoute {
+  final String id;
+  final String name;
+  final List<String> stops;
+  final String? description;
+
+  BusRoute({
+    required this.id,
+    required this.name,
+    required this.stops,
+    this.description,
+  });
+
+  factory BusRoute.fromJson(Map<String, dynamic> json) {
+    return BusRoute(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+      stops: List<String>.from(json['stops'] ?? []),
+      description: json['description'],
+    );
+  }
+}
+
+class Fare {
+  final String id;
+  final String source;
+  final String destination;
+  final double amount;
+
+  Fare({
+    required this.id,
+    required this.source,
+    required this.destination,
+    required this.amount,
+  });
+
+  factory Fare.fromJson(Map<String, dynamic> json) {
+    return Fare(
+      id: json['_id'] ?? '',
+      source: json['source'] ?? '',
+      destination: json['destination'] ?? '',
+      amount: (json['amount'] ?? 0).toDouble(),
+    );
+  }
+}
+
+class Trip {
+  final String id;
+  final Bus? bus;
+  final String source;
+  final String destination;
+  final DateTime departureTime;
+  final DateTime arrivalTime;
+  final double fare;
+  final int seatsAvailable;
+
+  Trip({
+    required this.id,
+    this.bus,
+    required this.source,
+    required this.destination,
+    required this.departureTime,
+    required this.arrivalTime,
+    required this.fare,
+    required this.seatsAvailable,
+  });
+
+  factory Trip.fromJson(Map<String, dynamic> json) {
+    return Trip(
+      id: json['_id'] ?? '',
+      bus: json['bus'] != null ? Bus.fromJson(json['bus']) : null,
+      source: json['source'] ?? '',
+      destination: json['destination'] ?? '',
+      departureTime: DateTime.parse(json['departureTime']),
+      arrivalTime: DateTime.parse(json['arrivalTime']),
+      fare: (json['fare'] ?? 0).toDouble(),
+      seatsAvailable: json['seatsAvailable'] ?? 0,
+    );
+  }
+}

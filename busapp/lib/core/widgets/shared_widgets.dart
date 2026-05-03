@@ -45,8 +45,14 @@ class GridPainter extends CustomPainter {
 class DarkScreenScaffold extends StatelessWidget {
   final Widget body;
   final PreferredSizeWidget? appBar;
+  final Widget? floatingActionButton;
 
-  const DarkScreenScaffold({super.key, required this.body, this.appBar});
+  const DarkScreenScaffold({
+    super.key,
+    required this.body,
+    this.appBar,
+    this.floatingActionButton,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +60,7 @@ class DarkScreenScaffold extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: appBar,
+      floatingActionButton: floatingActionButton,
       body: Stack(
         children: [
           // ambient glow blobs

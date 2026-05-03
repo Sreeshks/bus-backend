@@ -497,142 +497,250 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
     List<Location> items,
     ValueChanged<String?> onSelected,
   ) {
+    // Hoisted outside builder so they survive setModalState rebuilds
+    final TextEditingController searchCtrl = TextEditingController();
+    final FocusNode searchFocus = FocusNode();
+    List<Location> filtered = List.from(items);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
-          final TextEditingController searchCtrl = TextEditingController();
-          List<Location> filtered = items;
+          // Request focus after the sheet animates in
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            searchFocus.requestFocus();
+          });
 
-          return DraggableScrollableSheet(
-            initialChildSize: 0.8,
-            minChildSize: 0.5,
-            maxChildSize: 0.95,
-            builder: (_, scrollController) => Container(
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                children: [
-                  Center(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 12),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppColors.border,
-                        borderRadius: BorderRadius.circular(2),
+          return WillPopScope(
+            onWillPop: () async {
+              searchCtrl.dispose();
+              searchFocus.dispose();
+              return true;
+            },
+            child: DraggableScrollableSheet(
+              initialChildSize: 0.8,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              builder: (_, scrollController) => Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: Column(
+                  children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 12),
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.border,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-                    child: TextField(
-                      controller: searchCtrl,
-                      autofocus: true,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        hintText: 'Search station or code...',
-                        hintStyle: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
+                    // Search field
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                      child: TextField(
+                        controller: searchCtrl,
+                        focusNode: searchFocus,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 15,
                         ),
-                        prefixIcon: const Icon(
-                          Icons.search_rounded,
-                          color: AppColors.gold,
-                          size: 20,
-                        ),
-                        suffixIcon: searchCtrl.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, size: 18),
-                                onPressed: () {
-                                  searchCtrl.clear();
-                                  setModalState(() => filtered = items);
-                                },
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: AppColors.fieldBg,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                      ),
-                      onChanged: (q) {
-                        setModalState(() {
-                          filtered = items
-                              .where(
-                                (l) =>
-                                    l.name.toLowerCase().contains(
-                                      q.toLowerCase(),
-                                    ) ||
-                                    l.code.toLowerCase().contains(
-                                      q.toLowerCase(),
-                                    ),
-                              )
-                              .toList();
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: filtered.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'No locations found',
-                              style: TextStyle(color: AppColors.textSecondary),
-                            ),
-                          )
-                        : ListView.separated(
-                            controller: scrollController,
-                            padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, __) => Divider(
-                              color: AppColors.border.withValues(alpha: 0.5),
-                              height: 1,
-                            ),
-                            itemBuilder: (context, index) {
-                              final loc = filtered[index];
-                              return ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 4,
-                                ),
-                                title: Text(
-                                  loc.name,
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  loc.code,
-                                  style: const TextStyle(
-                                    color: AppColors.gold,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                trailing: const Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: AppColors.textSecondary,
-                                  size: 18,
-                                ),
-                                onTap: () {
-                                  onSelected(loc.name);
-                                  Navigator.pop(context);
-                                },
-                              );
-                            },
+                        decoration: InputDecoration(
+                          hintText: 'Search station or code...',
+                          hintStyle: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
                           ),
-                  ),
-                ],
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            color: AppColors.gold,
+                            size: 20,
+                          ),
+                          suffixIcon: AnimatedOpacity(
+                            opacity: searchCtrl.text.isNotEmpty ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 150),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.cancel_rounded,
+                                size: 18,
+                                color: AppColors.textSecondary,
+                              ),
+                              onPressed: () {
+                                searchCtrl.clear();
+                                setModalState(
+                                  () => filtered = List.from(items),
+                                );
+                                searchFocus.requestFocus();
+                              },
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.fieldBg,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.gold,
+                              width: 1.5,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 0,
+                          ),
+                        ),
+                        onChanged: (q) {
+                          final query = q.trim().toLowerCase();
+                          setModalState(() {
+                            filtered = query.isEmpty
+                                ? List.from(items)
+                                : items
+                                      .where(
+                                        (l) =>
+                                            l.name.toLowerCase().contains(
+                                              query,
+                                            ) ||
+                                            l.code.toLowerCase().contains(
+                                              query,
+                                            ),
+                                      )
+                                      .toList();
+                          });
+                        },
+                      ),
+                    ),
+                    // Count label
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            '${filtered.length} location${filtered.length != 1 ? 's' : ''}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.search_off_rounded,
+                                    size: 36,
+                                    color: AppColors.textSecondary.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  const Text(
+                                    'No locations found',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.separated(
+                              controller: scrollController,
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                              itemCount: filtered.length,
+                              separatorBuilder: (_, __) => Divider(
+                                color: AppColors.border.withValues(alpha: 0.4),
+                                height: 1,
+                                indent: 16,
+                                endIndent: 16,
+                              ),
+                              itemBuilder: (context, index) {
+                                final loc = filtered[index];
+                                return InkWell(
+                                  onTap: () {
+                                    searchCtrl.dispose();
+                                    searchFocus.dispose();
+                                    onSelected(loc.name);
+                                    Navigator.pop(context);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 38,
+                                          height: 38,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.gold.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              loc.code.length > 3
+                                                  ? loc.code.substring(0, 3)
+                                                  : loc.code,
+                                              style: const TextStyle(
+                                                color: AppColors.gold,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w800,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            loc.name,
+                                            style: const TextStyle(
+                                              color: AppColors.textPrimary,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.chevron_right_rounded,
+                                          color: AppColors.textSecondary,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          );
+          ); // DraggableScrollableSheet / WillPopScope
         },
       ),
     );
