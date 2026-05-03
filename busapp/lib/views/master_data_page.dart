@@ -91,6 +91,7 @@ class _LocationsView extends ConsumerWidget {
                 subtitle: loc.code,
                 icon: Icons.location_on_rounded,
                 iconColor: AppColors.indigo,
+                onEdit: () => _showLocDialog(context, ref, loc: loc),
                 onDelete: () => _deleteLoc(context, ref, loc.id),
               );
             },
@@ -108,7 +109,7 @@ class _LocationsView extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         mini: true,
-        onPressed: () => _showAddLocDialog(context, ref),
+        onPressed: () => _showLocDialog(context, ref),
         backgroundColor: AppColors.gold,
         child: const Icon(Icons.add, color: Colors.black),
       ),
@@ -130,41 +131,68 @@ class _LocationsView extends ConsumerWidget {
     }
   }
 
-  void _showAddLocDialog(BuildContext context, WidgetRef ref) {
-    final nameCtrl = TextEditingController();
-    final codeCtrl = TextEditingController();
+  void _showLocDialog(BuildContext context, WidgetRef ref, {Location? loc}) {
+    final isEdit = loc != null;
+    final nameCtrl = TextEditingController(text: loc?.name);
+    final codeCtrl = TextEditingController(text: loc?.code);
+    bool isLoading = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ManagementSheet(
-        title: 'Add Location',
-        children: [
-          DarkTextField(
-            controller: nameCtrl,
-            hint: 'Place Name',
-            prefixIcon: Icons.map_outlined,
-          ),
-          const SizedBox(height: 16),
-          DarkTextField(
-            controller: codeCtrl,
-            hint: 'Station Code',
-            prefixIcon: Icons.tag_rounded,
-          ),
-          const SizedBox(height: 32),
-          GoldButton(
-            onTap: () async {
-              if (nameCtrl.text.isEmpty) return;
-              await ref
-                  .read(ticketRepositoryProvider)
-                  .addLocation(nameCtrl.text, codeCtrl.text);
-              ref.invalidate(locationsProvider);
-              if (context.mounted) Navigator.pop(context);
-            },
-            label: 'ADD STATION',
-            icon: Icons.add_location_alt_rounded,
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return _ManagementSheet(
+            title: isEdit ? 'Edit Location' : 'Add Location',
+            children: [
+              DarkTextField(
+                controller: nameCtrl,
+                hint: 'Place Name',
+                prefixIcon: Icons.map_outlined,
+              ),
+              const SizedBox(height: 16),
+              DarkTextField(
+                controller: codeCtrl,
+                hint: 'Station Code',
+                prefixIcon: Icons.tag_rounded,
+              ),
+              const SizedBox(height: 32),
+              isLoading
+                  ? const LoadingButton()
+                  : GoldButton(
+                      onTap: () async {
+                        if (nameCtrl.text.isEmpty) return;
+                        setModalState(() => isLoading = true);
+                        try {
+                          if (isEdit) {
+                            await ref
+                                .read(ticketRepositoryProvider)
+                                .updateLocation(loc.id, nameCtrl.text, codeCtrl.text);
+                          } else {
+                            await ref
+                                .read(ticketRepositoryProvider)
+                                .addLocation(nameCtrl.text, codeCtrl.text);
+                          }
+                          ref.invalidate(locationsProvider);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(isEdit ? 'Location Updated!' : 'Location Added!'),
+                                backgroundColor: AppColors.success));
+                            Navigator.pop(context);
+                          }
+                        } catch (e) {
+                          setModalState(() => isLoading = false);
+                          if (context.mounted)
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error));
+                        }
+                      },
+                      label: isEdit ? 'SAVE CHANGES' : 'ADD STATION',
+                      icon: isEdit ? Icons.save_rounded : Icons.add_location_alt_rounded,
+                    ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -193,6 +221,7 @@ class _FaresView extends ConsumerWidget {
                 subtitle: '₹${fare.amount.toStringAsFixed(2)}',
                 icon: Icons.payments_rounded,
                 iconColor: AppColors.success,
+                onEdit: () => _showFareDialog(context, ref, fare: fare),
                 onDelete: () => _deleteFare(context, ref, fare.id),
               );
             },
@@ -210,7 +239,7 @@ class _FaresView extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         mini: true,
-        onPressed: () => _showAddFareDialog(context, ref),
+        onPressed: () => _showFareDialog(context, ref),
         backgroundColor: AppColors.gold,
         child: const Icon(Icons.add, color: Colors.black),
       ),
@@ -232,74 +261,94 @@ class _FaresView extends ConsumerWidget {
     }
   }
 
-  void _showAddFareDialog(BuildContext context, WidgetRef ref) {
-    final sourceCtrl = TextEditingController();
-    final destCtrl = TextEditingController();
-    final amountCtrl = TextEditingController();
+  void _showFareDialog(BuildContext context, WidgetRef ref, {Fare? fare}) {
+    final isEdit = fare != null;
+    final sourceCtrl = TextEditingController(text: fare?.source);
+    final destCtrl = TextEditingController(text: fare?.destination);
+    final amountCtrl = TextEditingController(text: fare?.amount.toString());
     final locations = ref.read(locationsProvider).value ?? [];
 
+    bool isLoading = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => _ManagementSheet(
-          title: 'Update Fare',
-          children: [
-            GestureDetector(
-              onTap: () => _showLocationPicker(context, locations, (val) {
-                setModalState(() => sourceCtrl.text = val);
-              }),
-              child: AbsorbPointer(
-                child: DarkTextField(
-                  controller: sourceCtrl,
-                  hint: 'Source Station',
-                  prefixIcon: Icons.logout_rounded,
+        builder: (context, setModalState) {
+          return _ManagementSheet(
+            title: isEdit ? 'Edit Fare' : 'Set Fare',
+            children: [
+              GestureDetector(
+                onTap: isEdit ? null : () => _showLocationPicker(context, locations, (val) {
+                  setModalState(() => sourceCtrl.text = val);
+                }),
+                child: AbsorbPointer(
+                  absorbing: !isEdit,
+                  child: DarkTextField(
+                    controller: sourceCtrl,
+                    hint: 'Source Station',
+                    prefixIcon: Icons.logout_rounded,
+                    enabled: !isEdit,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: () => _showLocationPicker(context, locations, (val) {
-                setModalState(() => destCtrl.text = val);
-              }),
-              child: AbsorbPointer(
-                child: DarkTextField(
-                  controller: destCtrl,
-                  hint: 'Destination Station',
-                  prefixIcon: Icons.login_rounded,
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: isEdit ? null : () => _showLocationPicker(context, locations, (val) {
+                  setModalState(() => destCtrl.text = val);
+                }),
+                child: AbsorbPointer(
+                  absorbing: !isEdit,
+                  child: DarkTextField(
+                    controller: destCtrl,
+                    hint: 'Destination Station',
+                    prefixIcon: Icons.login_rounded,
+                    enabled: !isEdit,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            DarkTextField(
-              controller: amountCtrl,
-              hint: 'Fare Amount (₹)',
-              keyboardType: TextInputType.number,
-              prefixIcon: Icons.currency_rupee_rounded,
-            ),
-            const SizedBox(height: 32),
-            GoldButton(
-              onTap: () async {
-                if (sourceCtrl.text.isEmpty ||
-                    destCtrl.text.isEmpty ||
-                    amountCtrl.text.isEmpty)
-                  return;
-                await ref
-                    .read(ticketRepositoryProvider)
-                    .updateFare(
-                      sourceCtrl.text,
-                      destCtrl.text,
-                      double.parse(amountCtrl.text),
-                    );
-                ref.invalidate(faresProvider);
-                if (context.mounted) Navigator.pop(context);
-              },
-              label: 'SAVE FARE',
-              icon: Icons.save_rounded,
-            ),
-          ],
-        ),
+              const SizedBox(height: 16),
+              DarkTextField(
+                controller: amountCtrl,
+                hint: 'Fare Amount (₹)',
+                keyboardType: TextInputType.number,
+                prefixIcon: Icons.currency_rupee_rounded,
+              ),
+              const SizedBox(height: 32),
+              isLoading
+                  ? const LoadingButton()
+                  : GoldButton(
+                      onTap: () async {
+                        if (sourceCtrl.text.isEmpty ||
+                            destCtrl.text.isEmpty ||
+                            amountCtrl.text.isEmpty) return;
+                        setModalState(() => isLoading = true);
+                        try {
+                          await ref.read(ticketRepositoryProvider).updateFare(
+                                sourceCtrl.text,
+                                destCtrl.text,
+                                double.parse(amountCtrl.text),
+                              );
+                          ref.invalidate(faresProvider);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(isEdit ? 'Fare Updated!' : 'Fare Set!'),
+                                backgroundColor: AppColors.success));
+                            Navigator.pop(context);
+                          }
+                        } catch (e) {
+                          setModalState(() => isLoading = false);
+                          if (context.mounted)
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error));
+                        }
+                      },
+                      label: isEdit ? 'SAVE CHANGES' : 'SAVE FARE',
+                      icon: Icons.save_rounded,
+                    ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -329,6 +378,7 @@ class _RoutesView extends ConsumerWidget {
                     '${r.stops.length} stops: ${r.stops.take(3).join(', ')}...',
                 icon: Icons.navigation_rounded,
                 iconColor: AppColors.gold,
+                onEdit: () => _showRouteDialog(context, ref, route: r),
                 onDelete: () => _deleteRoute(context, ref, r.id),
               );
             },
@@ -346,7 +396,7 @@ class _RoutesView extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         mini: true,
-        onPressed: () => _showAddRouteDialog(context, ref),
+        onPressed: () => _showRouteDialog(context, ref),
         backgroundColor: AppColors.gold,
         child: const Icon(Icons.add, color: Colors.black),
       ),
@@ -368,47 +418,75 @@ class _RoutesView extends ConsumerWidget {
     }
   }
 
-  void _showAddRouteDialog(BuildContext context, WidgetRef ref) {
-    final nameCtrl = TextEditingController();
-    final stopsCtrl = TextEditingController(); // Simple comma separated for now
+  void _showRouteDialog(BuildContext context, WidgetRef ref, {BusRoute? route}) {
+    final isEdit = route != null;
+    final nameCtrl = TextEditingController(text: route?.name);
+    final stopsCtrl = TextEditingController(text: route?.stops.join(', '));
+    bool isLoading = false;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ManagementSheet(
-        title: 'New Route',
-        children: [
-          DarkTextField(
-            controller: nameCtrl,
-            hint: 'Route Name (e.g. City Circular)',
-            prefixIcon: Icons.route_rounded,
-          ),
-          const SizedBox(height: 16),
-          DarkTextField(
-            controller: stopsCtrl,
-            hint: 'Stops (comma separated)',
-            prefixIcon: Icons.list_alt_rounded,
-          ),
-          const SizedBox(height: 32),
-          GoldButton(
-            onTap: () async {
-              if (nameCtrl.text.isEmpty || stopsCtrl.text.isEmpty) return;
-              final stops = stopsCtrl.text
-                  .split(',')
-                  .map((s) => s.trim())
-                  .where((s) => s.isNotEmpty)
-                  .toList();
-              await ref
-                  .read(ticketRepositoryProvider)
-                  .createRoute(nameCtrl.text, stops, null);
-              ref.invalidate(routesProvider);
-              if (context.mounted) Navigator.pop(context);
-            },
-            label: 'CREATE ROUTE',
-            icon: Icons.save_rounded,
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return _ManagementSheet(
+            title: isEdit ? 'Edit Route' : 'New Route',
+            children: [
+              DarkTextField(
+                controller: nameCtrl,
+                hint: 'Route Name (e.g. City Circular)',
+                prefixIcon: Icons.route_rounded,
+              ),
+              const SizedBox(height: 16),
+              DarkTextField(
+                controller: stopsCtrl,
+                hint: 'Stops (comma separated)',
+                prefixIcon: Icons.list_alt_rounded,
+              ),
+              const SizedBox(height: 32),
+              isLoading
+                  ? const LoadingButton()
+                  : GoldButton(
+                      onTap: () async {
+                        if (nameCtrl.text.isEmpty || stopsCtrl.text.isEmpty) return;
+                        setModalState(() => isLoading = true);
+                        final stops = stopsCtrl.text
+                            .split(',')
+                            .map((s) => s.trim())
+                            .where((s) => s.isNotEmpty)
+                            .toList();
+                        try {
+                          if (isEdit) {
+                            await ref.read(ticketRepositoryProvider).updateRoute(route.id, {
+                              'name': nameCtrl.text.trim(),
+                              'stops': stops,
+                            });
+                          } else {
+                            await ref
+                                .read(ticketRepositoryProvider)
+                                .createRoute(nameCtrl.text, stops, null);
+                          }
+                          ref.invalidate(routesProvider);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(isEdit ? 'Route Updated!' : 'Route Created!'),
+                                backgroundColor: AppColors.success));
+                            Navigator.pop(context);
+                          }
+                        } catch (e) {
+                          setModalState(() => isLoading = false);
+                          if (context.mounted)
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error));
+                        }
+                      },
+                      label: isEdit ? 'SAVE CHANGES' : 'CREATE ROUTE',
+                      icon: Icons.save_rounded,
+                    ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -437,6 +515,7 @@ class _PayModesView extends ConsumerWidget {
                 subtitle: 'Icon: ${pm.icon}',
                 icon: Icons.credit_card_rounded,
                 iconColor: _parseColor(pm.color),
+                onEdit: () => _showPmDialog(context, ref, pm: pm),
                 onDelete: () => _deletePm(context, ref, pm.id),
               );
             },
@@ -454,7 +533,7 @@ class _PayModesView extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         mini: true,
-        onPressed: () => _showAddPmDialog(context, ref),
+        onPressed: () => _showPmDialog(context, ref),
         backgroundColor: AppColors.gold,
         child: const Icon(Icons.add, color: Colors.black),
       ),
@@ -476,49 +555,84 @@ class _PayModesView extends ConsumerWidget {
     }
   }
 
-  void _showAddPmDialog(BuildContext context, WidgetRef ref) {
-    final nameCtrl = TextEditingController();
-    final iconCtrl = TextEditingController(text: 'payments');
-    final colorCtrl = TextEditingController(text: '#D4952A');
+  void _showPmDialog(BuildContext context, WidgetRef ref, {PayMode? pm}) {
+    final isEdit = pm != null;
+    final nameCtrl = TextEditingController(text: pm?.name);
+    final iconCtrl = TextEditingController(text: pm?.icon ?? 'payments');
+    final colorCtrl = TextEditingController(text: pm?.color ?? '#D4952A');
+    bool isLoading = false;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ManagementSheet(
-        title: 'Add Payment Mode',
-        children: [
-          DarkTextField(
-            controller: nameCtrl,
-            hint: 'Mode Name',
-            prefixIcon: Icons.type_specimen_rounded,
-          ),
-          const SizedBox(height: 16),
-          DarkTextField(
-            controller: iconCtrl,
-            hint: 'Icon Name',
-            prefixIcon: Icons.palette_rounded,
-          ),
-          const SizedBox(height: 16),
-          DarkTextField(
-            controller: colorCtrl,
-            hint: 'Hex Color (#...)',
-            prefixIcon: Icons.color_lens_rounded,
-          ),
-          const SizedBox(height: 32),
-          GoldButton(
-            onTap: () async {
-              if (nameCtrl.text.isEmpty) return;
-              await ref
-                  .read(ticketRepositoryProvider)
-                  .addPayMode(nameCtrl.text, iconCtrl.text, colorCtrl.text, 0);
-              ref.invalidate(payModesProvider);
-              if (context.mounted) Navigator.pop(context);
-            },
-            label: 'ADD MODE',
-            icon: Icons.add_card_rounded,
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return _ManagementSheet(
+            title: isEdit ? 'Edit Payment Mode' : 'Add Payment Mode',
+            children: [
+              DarkTextField(
+                controller: nameCtrl,
+                hint: 'Mode Name',
+                prefixIcon: Icons.type_specimen_rounded,
+              ),
+              const SizedBox(height: 16),
+              DarkTextField(
+                controller: iconCtrl,
+                hint: 'Icon Name',
+                prefixIcon: Icons.palette_rounded,
+              ),
+              const SizedBox(height: 16),
+              DarkTextField(
+                controller: colorCtrl,
+                hint: 'Hex Color (#...)',
+                prefixIcon: Icons.color_lens_rounded,
+              ),
+              const SizedBox(height: 32),
+              isLoading
+                  ? const LoadingButton()
+                  : GoldButton(
+                      onTap: () async {
+                        if (nameCtrl.text.isEmpty) return;
+                        setModalState(() => isLoading = true);
+                        try {
+                          final pmData = {
+                            'name': nameCtrl.text.trim(),
+                            'icon': iconCtrl.text.trim(),
+                            'color': colorCtrl.text.trim(),
+                            'sortOrder': 0,
+                          };
+
+                          if (isEdit) {
+                            await ref.read(ticketRepositoryProvider).updatePayMode(pm.id, pmData);
+                          } else {
+                            await ref.read(ticketRepositoryProvider).addPayMode(
+                                pmData['name'] as String,
+                                pmData['icon'] as String,
+                                pmData['color'] as String,
+                                pmData['sortOrder'] as int);
+                          }
+
+                          ref.invalidate(payModesProvider);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(isEdit ? 'Payment Mode Updated!' : 'Payment Mode Added!'),
+                                backgroundColor: AppColors.success));
+                            Navigator.pop(context);
+                          }
+                        } catch (e) {
+                          setModalState(() => isLoading = false);
+                          if (context.mounted)
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error));
+                        }
+                      },
+                      label: isEdit ? 'SAVE CHANGES' : 'ADD MODE',
+                      icon: isEdit ? Icons.save_rounded : Icons.add_card_rounded,
+                    ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -540,6 +654,7 @@ Widget _buildListCard({
   required IconData icon,
   required Color iconColor,
   required VoidCallback onDelete,
+  VoidCallback? onEdit,
 }) {
   return Container(
     margin: const EdgeInsets.only(bottom: 12),
@@ -582,6 +697,15 @@ Widget _buildListCard({
             ],
           ),
         ),
+        if (onEdit != null)
+          IconButton(
+            onPressed: onEdit,
+            icon: const Icon(
+              Icons.edit_note_rounded,
+              color: AppColors.gold,
+              size: 22,
+            ),
+          ),
         IconButton(
           onPressed: onDelete,
           icon: const Icon(

@@ -5,6 +5,7 @@ const {
     getLocations,
     addFare,
     getFareQuery,
+    updateLocation,
     deleteLocation,
     deleteFare,
 } = require('../controllers/masterController');
@@ -70,6 +71,7 @@ router.route('/locations')
     .post(protect, checkPermission('manage_locations'), addLocation);
 
 router.route('/locations/:id')
+    .put(protect, checkPermission('manage_locations'), updateLocation)
     .delete(protect, checkPermission('manage_locations'), deleteLocation);
 
 // Fares

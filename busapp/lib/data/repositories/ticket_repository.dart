@@ -32,15 +32,33 @@ class TicketRepository {
     }
   }
 
-  Future<Bus> createBus(String name, String busNumber) async {
+  Future<Bus> createBus({
+    required String name,
+    required String busNumber,
+    required int capacity,
+    required String type,
+    required String operatorName,
+  }) async {
     try {
       final response = await _apiClient.client.post('/buses', data: {
         'name': name,
         'busNumber': busNumber,
+        'capacity': capacity,
+        'type': type,
+        'operatorName': operatorName,
       });
       return Bus.fromJson(response.data);
     } on DioException catch (e) {
       throw e.response?.data['message'] ?? 'Failed to create bus';
+    }
+  }
+
+  Future<Bus> updateBus(String id, Map<String, dynamic> busData) async {
+    try {
+      final response = await _apiClient.client.put('/buses/$id', data: busData);
+      return Bus.fromJson(response.data);
+    } on DioException catch (e) {
+      throw e.response?.data['message'] ?? 'Failed to update bus';
     }
   }
 
@@ -71,6 +89,10 @@ class TicketRepository {
 
   Future<void> addLocation(String name, String code) async {
     await _apiClient.client.post('/master/locations', data: {'name': name, 'code': code});
+  }
+
+  Future<void> updateLocation(String id, String name, String code) async {
+    await _apiClient.client.put('/master/locations/$id', data: {'name': name, 'code': code});
   }
 
   Future<void> deleteLocation(String id) async {
@@ -107,6 +129,10 @@ class TicketRepository {
     });
   }
 
+  Future<void> updateRoute(String id, Map<String, dynamic> routeData) async {
+    await _apiClient.client.put('/master/routes/$id', data: routeData);
+  }
+
   Future<void> deleteRoute(String id) async {
     await _apiClient.client.delete('/master/routes/$id');
   }
@@ -118,6 +144,10 @@ class TicketRepository {
       'color': color,
       'sortOrder': sortOrder,
     });
+  }
+
+  Future<void> updatePayMode(String id, Map<String, dynamic> pmData) async {
+    await _apiClient.client.put('/master/pay-modes/$id', data: pmData);
   }
 
   Future<void> deletePayMode(String id) async {

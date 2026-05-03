@@ -34,6 +34,24 @@ const getLocations = async (req, res) => {
     }
 };
 
+// @desc    Update a location
+// @route   PUT /api/master/locations/:id
+// @access  Private/Admin
+const updateLocation = async (req, res) => {
+    const { name, code } = req.body;
+    const location = await Location.findById(req.params.id);
+
+    if (location) {
+        location.name = name || location.name;
+        location.code = code || location.code;
+        const updatedLocation = await location.save();
+        res.json(updatedLocation);
+    } else {
+        res.status(404);
+        throw new Error('Location not found');
+    }
+};
+
 // --- Fares ---
 
 // @desc    Set fare between two locations
@@ -121,6 +139,7 @@ module.exports = {
     getLocations,
     addFare,
     getFareQuery,
+    updateLocation,
     deleteLocation,
     deleteFare
 };

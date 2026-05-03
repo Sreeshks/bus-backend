@@ -70,14 +70,27 @@ class Bus {
   final String id;
   final String name;
   final String busNumber;
+  final int capacity;
+  final String type;
+  final String operatorName;
 
-  Bus({required this.id, required this.name, required this.busNumber});
+  Bus({
+    required this.id,
+    required this.name,
+    required this.busNumber,
+    required this.capacity,
+    required this.type,
+    required this.operatorName,
+  });
 
   factory Bus.fromJson(Map<String, dynamic> json) {
     return Bus(
       id: json['_id'],
       name: json['name'] ?? '',
       busNumber: json['busNumber'] ?? '',
+      capacity: json['capacity'] ?? 0,
+      type: json['type'] ?? 'Non-AC',
+      operatorName: json['operatorName'] ?? '',
     );
   }
 }

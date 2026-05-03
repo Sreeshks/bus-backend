@@ -78,6 +78,15 @@ class AuthRepository {
     }
   }
 
+  Future<User> updateUser(String id, Map<String, dynamic> userData) async {
+    try {
+      final response = await _apiClient.client.put('/auth/users/$id', data: userData);
+      return User.fromJson(response.data);
+    } on DioException catch (e) {
+      throw e.response?.data['message'] ?? 'Failed to update user';
+    }
+  }
+
   Future<void> logout() async {
     await _apiClient.clearToken();
   }

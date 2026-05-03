@@ -124,14 +124,16 @@ class _GoldButtonState extends State<GoldButton> {
               widget.onTap();
             }
           : null,
-      onTapCancel:
-          widget.enabled ? () => setState(() => _pressed = false) : null,
+      onTapCancel: widget.enabled
+          ? () => setState(() => _pressed = false)
+          : null,
       child: AnimatedScale(
         scale: _pressed ? 0.97 : 1.0,
         duration: const Duration(milliseconds: 100),
         child: Opacity(
           opacity: opacity,
           child: Container(
+            height: 54,
             decoration: BoxDecoration(
               gradient: AppColors.goldGradient,
               borderRadius: BorderRadius.circular(14),
@@ -203,6 +205,7 @@ class DarkTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final IconData prefixIcon;
   final Widget? suffix;
+  final bool enabled;
 
   const DarkTextField({
     super.key,
@@ -212,6 +215,7 @@ class DarkTextField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     required this.prefixIcon,
     this.suffix,
+    this.enabled = true,
   });
 
   @override
@@ -220,6 +224,7 @@ class DarkTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      enabled: enabled,
       style: const TextStyle(
         color: AppColors.textPrimary,
         fontSize: 15,
@@ -245,10 +250,7 @@ class DarkTextField extends StatelessWidget {
         ),
         prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         suffixIcon: suffix != null
-            ? Padding(
-                padding: const EdgeInsets.only(right: 14),
-                child: suffix,
-              )
+            ? Padding(padding: const EdgeInsets.only(right: 14), child: suffix)
             : null,
         suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         border: OutlineInputBorder(
@@ -258,6 +260,10 @@ class DarkTextField extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.border),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppColors.border.withOpacity(0.5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -382,10 +388,7 @@ class ThemedCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: borderColor ?? AppColors.border,
-          width: 1,
-        ),
+        border: Border.all(color: borderColor ?? AppColors.border, width: 1),
       ),
       padding: padding,
       child: child,

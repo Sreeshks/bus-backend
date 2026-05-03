@@ -15,7 +15,10 @@ class ManageTripsPage extends ConsumerWidget {
 
     return DarkScreenScaffold(
       appBar: AppBar(
-        title: const Text('Manage Trips', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'Manage Trips',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         backgroundColor: AppColors.surface,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
@@ -34,8 +37,15 @@ class ManageTripsPage extends ConsumerWidget {
               return _buildTripCard(context, ref, trip);
             },
           ),
-          loading: () => const Center(child: CircularProgressIndicator(color: AppColors.gold)),
-          error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.error))),
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: AppColors.gold),
+          ),
+          error: (e, _) => Center(
+            child: Text(
+              'Error: $e',
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -61,20 +71,46 @@ class ManageTripsPage extends ConsumerWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: AppColors.gold.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.directions_bus_rounded, color: AppColors.gold, size: 20),
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.directions_bus_rounded,
+                  color: AppColors.gold,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(trip.bus?.name ?? 'Unknown Bus', style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                    Text(trip.bus?.busNumber ?? '', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                    Text(
+                      trip.bus?.name ?? 'Unknown Bus',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      trip.bus?.busNumber ?? '',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              Text('₹${trip.fare}', style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                '₹${trip.fare}',
+                style: const TextStyle(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ],
           ),
           const Padding(
@@ -85,7 +121,11 @@ class ManageTripsPage extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildTripPoint(trip.source, trip.departureTime),
-              const Icon(Icons.arrow_forward_rounded, color: AppColors.textSecondary, size: 16),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                color: AppColors.textSecondary,
+                size: 16,
+              ),
               _buildTripPoint(trip.destination, trip.arrivalTime),
             ],
           ),
@@ -93,10 +133,21 @@ class ManageTripsPage extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${trip.seatsAvailable} seats available', style: const TextStyle(color: AppColors.goldLight, fontSize: 11, fontWeight: FontWeight.bold)),
+              Text(
+                '${trip.seatsAvailable} seats available',
+                style: const TextStyle(
+                  color: AppColors.goldLight,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               IconButton(
                 onPressed: () => _deleteTrip(context, ref, trip.id),
-                icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: AppColors.error,
+                  size: 20,
+                ),
                 visualDensity: VisualDensity.compact,
               ),
             ],
@@ -110,8 +161,18 @@ class ManageTripsPage extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
-        Text(DateFormat('MMM dd, hh:mm a').format(time), style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+        Text(
+          name,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+        Text(
+          DateFormat('MMM dd, hh:mm a').format(time),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+        ),
       ],
     );
   }
@@ -121,11 +182,29 @@ class ManageTripsPage extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.card,
-        title: const Text('Cancel Trip', style: TextStyle(color: AppColors.textPrimary)),
-        content: const Text('Are you sure you want to cancel this scheduled trip?', style: TextStyle(color: AppColors.textSecondary)),
+        title: const Text(
+          'Cancel Trip',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: const Text(
+          'Are you sure you want to cancel this scheduled trip?',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No', style: TextStyle(color: AppColors.textSecondary))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Yes, Cancel', style: TextStyle(color: AppColors.error))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'No',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Yes, Cancel',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
         ],
       ),
     );
@@ -135,7 +214,10 @@ class ManageTripsPage extends ConsumerWidget {
         await ref.read(ticketRepositoryProvider).deleteTrip(id);
         ref.invalidate(tripsProvider);
       } catch (e) {
-        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        if (context.mounted)
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }
@@ -149,6 +231,7 @@ class ManageTripsPage extends ConsumerWidget {
     final seatsCtrl = TextEditingController();
     DateTime departure = DateTime.now().add(const Duration(hours: 1));
     DateTime arrival = DateTime.now().add(const Duration(hours: 4));
+    bool isLoading = false;
 
     showModalBottomSheet(
       context: context,
@@ -156,7 +239,12 @@ class ManageTripsPage extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-          padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
           decoration: const BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -166,84 +254,180 @@ class ManageTripsPage extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Schedule New Trip', style: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Schedule New Trip',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 24),
-                
+
                 // Bus Dropdown
                 busesAsync.when(
                   data: (buses) => Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(color: AppColors.fieldBg, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+                    decoration: BoxDecoration(
+                      color: AppColors.fieldBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                    ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: selectedBusId,
-                        hint: const Text('Select Bus', style: TextStyle(color: AppColors.textSecondary)),
+                        hint: const Text(
+                          'Select Bus',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
                         dropdownColor: AppColors.surface,
                         isExpanded: true,
-                        items: buses.map((b) => DropdownMenuItem(value: b.id, child: Text('${b.name} (${b.busNumber})', style: const TextStyle(color: AppColors.textPrimary)))).toList(),
-                        onChanged: (val) => setModalState(() => selectedBusId = val),
+                        items: buses
+                            .map(
+                              (b) => DropdownMenuItem(
+                                value: b.id,
+                                child: Text(
+                                  '${b.name} (${b.busNumber})',
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) =>
+                            setModalState(() => selectedBusId = val),
                       ),
                     ),
                   ),
-                  loading: () => const LinearProgressIndicator(color: AppColors.gold),
-                  error: (e, _) => Text('Error loading buses', style: const TextStyle(color: AppColors.error)),
+                  loading: () =>
+                      const LinearProgressIndicator(color: AppColors.gold),
+                  error: (e, _) => Text(
+                    'Error loading buses',
+                    style: const TextStyle(color: AppColors.error),
+                  ),
                 ),
-                
+
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: DarkTextField(controller: sourceCtrl, hint: 'Source', prefixIcon: Icons.logout_rounded)),
+                    Expanded(
+                      child: DarkTextField(
+                        controller: sourceCtrl,
+                        hint: 'Source',
+                        prefixIcon: Icons.logout_rounded,
+                      ),
+                    ),
                     const SizedBox(width: 12),
-                    Expanded(child: DarkTextField(controller: destCtrl, hint: 'Destination', prefixIcon: Icons.login_rounded)),
+                    Expanded(
+                      child: DarkTextField(
+                        controller: destCtrl,
+                        hint: 'Destination',
+                        prefixIcon: Icons.login_rounded,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Times
                 Row(
                   children: [
                     Expanded(
-                      child: _buildTimePicker(context, 'Departure', departure, (newTime) => setModalState(() => departure = newTime)),
+                      child: _buildTimePicker(
+                        context,
+                        'Departure',
+                        departure,
+                        (newTime) => setModalState(() => departure = newTime),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildTimePicker(context, 'Arrival', arrival, (newTime) => setModalState(() => arrival = newTime)),
+                      child: _buildTimePicker(
+                        context,
+                        'Arrival',
+                        arrival,
+                        (newTime) => setModalState(() => arrival = newTime),
+                      ),
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: DarkTextField(controller: fareCtrl, hint: 'Fare (₹)', keyboardType: TextInputType.number, prefixIcon: Icons.currency_rupee_rounded)),
+                    Expanded(
+                      child: DarkTextField(
+                        controller: fareCtrl,
+                        hint: 'Fare (₹)',
+                        keyboardType: TextInputType.number,
+                        prefixIcon: Icons.currency_rupee_rounded,
+                      ),
+                    ),
                     const SizedBox(width: 12),
-                    Expanded(child: DarkTextField(controller: seatsCtrl, hint: 'Seats', keyboardType: TextInputType.number, prefixIcon: Icons.people_rounded)),
+                    Expanded(
+                      child: DarkTextField(
+                        controller: seatsCtrl,
+                        hint: 'Seats',
+                        keyboardType: TextInputType.number,
+                        prefixIcon: Icons.people_rounded,
+                      ),
+                    ),
                   ],
                 ),
-                
-                const SizedBox(height: 32),
-                GoldButton(
-                  onTap: () async {
-                    if (selectedBusId == null || sourceCtrl.text.isEmpty || destCtrl.text.isEmpty || fareCtrl.text.isEmpty) return;
-                    try {
-                      await ref.read(ticketRepositoryProvider).createTrip({
-                        'busId': selectedBusId,
-                        'source': sourceCtrl.text,
-                        'destination': destCtrl.text,
-                        'departureTime': departure.toIso8601String(),
-                        'arrivalTime': arrival.toIso8601String(),
-                        'fare': double.parse(fareCtrl.text),
-                        'seatsAvailable': int.parse(seatsCtrl.text),
-                      });
-                      ref.invalidate(tripsProvider);
-                      if (context.mounted) Navigator.pop(context);
-                    } catch (e) {
-                      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-                    }
-                  },
-                  label: 'SCHEDULE TRIP',
-                  icon: Icons.calendar_today_rounded,
-                ),
+
+                isLoading
+                    ? const LoadingButton()
+                    : GoldButton(
+                        onTap: () async {
+                          if (selectedBusId == null ||
+                              sourceCtrl.text.isEmpty ||
+                              destCtrl.text.isEmpty ||
+                              fareCtrl.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please fill all fields'),
+                              ),
+                            );
+                            return;
+                          }
+                          setModalState(() => isLoading = true);
+                          try {
+                            await ref
+                                .read(ticketRepositoryProvider)
+                                .createTrip({
+                                  'busId': selectedBusId,
+                                  'source': sourceCtrl.text.trim(),
+                                  'destination': destCtrl.text.trim(),
+                                  'departureTime': departure.toIso8601String(),
+                                  'arrivalTime': arrival.toIso8601String(),
+                                  'fare': double.parse(fareCtrl.text),
+                                  'seatsAvailable': int.parse(seatsCtrl.text),
+                                });
+                            ref.invalidate(tripsProvider);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Trip Scheduled!'),
+                                  backgroundColor: AppColors.success,
+                                ),
+                              );
+                              Navigator.pop(context);
+                            }
+                          } catch (e) {
+                            setModalState(() => isLoading = false);
+                            if (context.mounted)
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(e.toString()),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                          }
+                        },
+                        label: 'SCHEDULE TRIP',
+                        icon: Icons.calendar_today_rounded,
+                      ),
               ],
             ),
           ),
@@ -252,26 +436,59 @@ class ManageTripsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildTimePicker(BuildContext context, String label, DateTime current, Function(DateTime) onPicked) {
+  Widget _buildTimePicker(
+    BuildContext context,
+    String label,
+    DateTime current,
+    Function(DateTime) onPicked,
+  ) {
     return GestureDetector(
       onTap: () async {
-        final date = await showDatePicker(context: context, initialDate: current, firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365)));
+        final date = await showDatePicker(
+          context: context,
+          initialDate: current,
+          firstDate: DateTime.now(),
+          lastDate: DateTime.now().add(const Duration(days: 365)),
+        );
         if (date != null && context.mounted) {
-          final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(current));
+          final time = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.fromDateTime(current),
+          );
           if (time != null) {
-            onPicked(DateTime(date.year, date.month, date.day, time.hour, time.minute));
+            onPicked(
+              DateTime(date.year, date.month, date.day, time.hour, time.minute),
+            );
           }
         }
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(color: AppColors.fieldBg, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(
+          color: AppColors.fieldBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(DateFormat('MMM dd, hh:mm a').format(current), style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
+            Text(
+              DateFormat('MMM dd, hh:mm a').format(current),
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),

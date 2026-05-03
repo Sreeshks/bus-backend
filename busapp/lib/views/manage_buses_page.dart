@@ -30,7 +30,7 @@ class ManageBusesPage extends ConsumerWidget {
             itemCount: buses.length,
             itemBuilder: (context, index) {
               final bus = buses[index];
-              return _buildBusCard(context, bus);
+              return _buildBusCard(context, ref, bus);
             },
           ),
           loading: () => const Center(child: CircularProgressIndicator(color: AppColors.gold)),
@@ -38,14 +38,14 @@ class ManageBusesPage extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddBusDialog(context, ref),
+        onPressed: () => _showBusDialog(context, ref),
         backgroundColor: AppColors.gold,
         child: const Icon(Icons.add, color: Colors.black),
       ),
     );
   }
 
-  Widget _buildBusCard(BuildContext context, Bus bus) {
+  Widget _buildBusCard(BuildContext context, WidgetRef ref, Bus bus) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -77,58 +77,146 @@ class ManageBusesPage extends ConsumerWidget {
                   bus.busNumber,
                   style: const TextStyle(color: AppColors.goldLight, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
                 ),
+                Text(
+                  '${bus.capacity} Seats • ${bus.type}',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 10),
+                ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+          IconButton(
+            onPressed: () => _showBusDialog(context, ref, bus: bus),
+            icon: const Icon(Icons.edit_note_rounded, color: AppColors.gold, size: 24),
+          ),
         ],
       ),
     );
   }
 
-  void _showAddBusDialog(BuildContext context, WidgetRef ref) {
-    final nameCtrl = TextEditingController();
-    final numberCtrl = TextEditingController();
+  void _showBusDialog(BuildContext context, WidgetRef ref, {Bus? bus}) {
+    final isEdit = bus != null;
+    final nameCtrl = TextEditingController(text: bus?.name);
+    final numberCtrl = TextEditingController(text: bus?.busNumber);
+    final capacityCtrl = TextEditingController(text: isEdit ? bus.capacity.toString() : '40');
+    final operatorCtrl = TextEditingController(text: bus?.operatorName);
+    String busType = bus?.type ?? 'Non-AC';
+
+    bool isLoading = false;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Add New Bus', style: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 24),
-            DarkTextField(controller: nameCtrl, hint: 'Bus Name (e.g. Rapid X)', prefixIcon: Icons.badge_outlined),
-            const SizedBox(height: 16),
-            DarkTextField(controller: numberCtrl, hint: 'Bus Number (e.g. KL-01-AB-1234)', prefixIcon: Icons.tag_rounded),
-            const SizedBox(height: 32),
-            GoldButton(
-              onTap: () async {
-                if (nameCtrl.text.isEmpty || numberCtrl.text.isEmpty) return;
-                try {
-                  await ref.read(ticketRepositoryProvider).createBus(
-                    nameCtrl.text.trim(),
-                    numberCtrl.text.trim(),
-                  );
-                  ref.invalidate(busesProvider);
-                  if (context.mounted) Navigator.pop(context);
-                } catch (e) {
-                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-                }
-              },
-              label: 'REGISTER BUS',
-              icon: Icons.save_rounded,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-          ],
-        ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(isEdit ? 'Edit Bus' : 'Add New Bus',
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 24),
+                  DarkTextField(controller: nameCtrl, hint: 'Bus Name (e.g. Rapid X)', prefixIcon: Icons.badge_outlined),
+                  const SizedBox(height: 16),
+                  DarkTextField(
+                      controller: numberCtrl, hint: 'Bus Number (e.g. KL-01-AB-1234)', prefixIcon: Icons.tag_rounded),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                          child: DarkTextField(
+                              controller: capacityCtrl,
+                              hint: 'Capacity',
+                              keyboardType: TextInputType.number,
+                              prefixIcon: Icons.event_seat_rounded)),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                              color: AppColors.fieldBg,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppColors.border)),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: busType,
+                              dropdownColor: AppColors.surface,
+                              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                              items: ['AC', 'Non-AC', 'Sleeper', 'Seater', 'Semi-Sleeper']
+                                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                                  .toList(),
+                              onChanged: (v) => setModalState(() => busType = v!),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  DarkTextField(controller: operatorCtrl, hint: 'Operator Name', prefixIcon: Icons.business_rounded),
+                  const SizedBox(height: 32),
+                  isLoading
+                      ? const LoadingButton()
+                      : GoldButton(
+                          onTap: () async {
+                            if (nameCtrl.text.isEmpty ||
+                                numberCtrl.text.isEmpty ||
+                                capacityCtrl.text.isEmpty ||
+                                operatorCtrl.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
+                              return;
+                            }
+                            setModalState(() => isLoading = true);
+                            try {
+                              final busData = {
+                                'name': nameCtrl.text.trim(),
+                                'busNumber': numberCtrl.text.trim(),
+                                'capacity': int.parse(capacityCtrl.text),
+                                'type': busType,
+                                'operatorName': operatorCtrl.text.trim(),
+                              };
+
+                              if (isEdit) {
+                                await ref.read(ticketRepositoryProvider).updateBus(bus.id, busData);
+                              } else {
+                                await ref.read(ticketRepositoryProvider).createBus(
+                                      name: busData['name'] as String,
+                                      busNumber: busData['busNumber'] as String,
+                                      capacity: busData['capacity'] as int,
+                                      type: busData['type'] as String,
+                                      operatorName: busData['operatorName'] as String,
+                                    );
+                              }
+
+                              ref.invalidate(busesProvider);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(isEdit ? 'Bus Updated Successfully!' : 'Bus Registered Successfully!'),
+                                    backgroundColor: AppColors.success));
+                                Navigator.pop(context);
+                              }
+                            } catch (e) {
+                              setModalState(() => isLoading = false);
+                              if (context.mounted)
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error));
+                            }
+                          },
+                          label: isEdit ? 'SAVE CHANGES' : 'REGISTER BUS',
+                          icon: isEdit ? Icons.save_rounded : Icons.add_rounded,
+                        ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

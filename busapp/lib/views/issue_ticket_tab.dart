@@ -90,7 +90,7 @@ class _IssueTicketTabState extends ConsumerState<IssueTicketTab>
       await ref
           .read(ticketRepositoryProvider)
           .issueTicket(
-            busId: user.assignedBusId!,
+            busId: user.assignedBus!.id,
             source: selectedSource!,
             destination: selectedDestination!,
             adultCount: adultCount,
